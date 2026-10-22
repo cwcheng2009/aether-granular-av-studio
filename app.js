@@ -65,7 +65,9 @@
       turbulence: 0.65,
       trails: 0.86,
       glitch: 0.35,
-      particleSize: 2.2
+      particleSize: 2.2,
+      camOpacity: 0.45, // 0 ~ 1 攝影機背景影像疊加透明度
+      camClarity: 0.85  // 0 ~ 1 攝影機背景影像清晰度 (1 = 銳利清晰, 0 = 夢幻柔焦模糊)
     },
 
     // 執行期統計與視訊鏡頭體感偵測狀態
@@ -847,7 +849,7 @@
     fxCtx.fillStyle = `rgba(6, 7, 12, ${fadeAlpha})`;
     fxCtx.fillRect(0, 0, w, h);
 
-    // 若開啟視訊鏡頭，擷取低解析度像素陣列供粒子吸附、發光與體感動作發聲偵測
+    // 若開啟視訊鏡頭，擷取低解析度像素陣列供粒子吸附、發光與體感動作發聲偵測，並根據設定疊加背景清晰攝影機畫面
     if (state.webcamActive && webcamVideo.readyState >= 2) {
       camSampleCtx.save();
       camSampleCtx.scale(-1, 1); // 鏡像翻轉
@@ -855,6 +857,33 @@
       camSampleCtx.restore();
       camPixelData = camSampleCtx.getImageData(0, 0, camSampleCanvas.width, camSampleCanvas.height).data;
       analyzeWebcamMotion(camPixelData);
+
+      // 繪製背景攝影機實景影像 (支援自由調整疊加透明度與清晰度/柔焦程度，與前景粒子特效重疊)
+      if (state.visual.camOpacity > 0.01) {
+        fxCtx.save();
+        fxCtx.globalCompositeOperation = 'source-over';
+        // 當有殘影時，適度調整每幀繪入透明度避免過曝，同時保持影像清晰可見
+        const effectiveAlpha = state.visual.camOpacity * (0.28 + fadeAlpha * 0.72);
+        fxCtx.globalAlpha = Math.min(1, effectiveAlpha);
+
+        const blurPx = Math.round((1 - state.visual.camClarity) * 20);
+        const contrastPct = Math.round(95 + state.visual.camClarity * 25 + audioEnergy.bass * 18);
+        const saturatePct = Math.round(90 + state.visual.camClarity * 35);
+        fxCtx.filter = blurPx > 0
+          ? `blur(${blurPx}px) contrast(${contrastPct}%) saturate(${saturatePct}%)`
+          : `contrast(${contrastPct}%) saturate(${saturatePct}%)`;
+
+        // 鏡像翻轉並等比例滿版繪製攝影機畫面
+        fxCtx.translate(w, 0);
+        fxCtx.scale(-1, 1);
+        const vw = webcamVideo.videoWidth || 640;
+        const vh = webcamVideo.videoHeight || 360;
+        const scale = Math.max(w / vw, h / vh);
+        const drawW = vw * scale;
+        const drawH = vh * scale;
+        fxCtx.drawImage(webcamVideo, (w - drawW) * 0.5, (h - drawH) * 0.5, drawW, drawH);
+        fxCtx.restore();
+      }
     } else {
       camPixelData = null;
       state.camMotionEnergy *= 0.85;
@@ -1341,6 +1370,8 @@
   bindSlider('vis-trails', (v) => { state.visual.trails = v; return `${Math.round(v * 100)}%`; });
   bindSlider('vis-glitch', (v) => { state.visual.glitch = v; return `${Math.round(v * 100)}%`; });
   bindSlider('vis-size', (v) => { state.visual.particleSize = v; return `${v.toFixed(1)} px`; });
+  bindSlider('cam-opacity', (v) => { state.visual.camOpacity = v; return `${Math.round(v * 100)}%`; });
+  bindSlider('cam-clarity', (v) => { state.visual.camClarity = v; return `${Math.round(v * 100)}%`; });
 
   // 隨機靈感按鈕
   document.getElementById('btn-random-grain').addEventListener('click', () => {
@@ -1394,7 +1425,7 @@
 
     try {
       webcamStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 180, facingMode: 'user' },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
         audio: false
       });
       webcamVideo.srcObject = webcamStream;
