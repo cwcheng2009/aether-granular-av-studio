@@ -77,9 +77,9 @@
     camMotionX: 0.5,         // 鏡頭動作重心 X (0 ~ 1)
     camMotionY: 0.5,         // 鏡頭動作重心 Y (0 ~ 1)
 
-    // REplay PLAYer 風格自動演化與速度漸變參數
+    // 自動演化與速度漸變參數 (02 區塊 8 個參數皆可獨立設定「手動」或「自動」)
     auto: {
-      scanMode: 'manual',    // 'manual' | 'walk' | 'loop' | 'jump' | 'pendulum'
+      scanMode: 'manual',    // 'manual' | 'neighbor_step' | 'walk' | 'loop' | 'jump' | 'pendulum'
       tempoMode: 'manual',   // 'manual' | 'accel' | 'decel' | 'pendulum' | 'random_morph'
       pitchMode: 'manual',   // 'manual' | 'glissando' | 'brownian' | 'rising'
       cycleSec: 8.0,         // 漸變週期秒數 (2 ~ 30s)
@@ -87,7 +87,22 @@
       walkTargetPos: 0.5,
       glissTargetPitch: 0,
       morphTargetDensity: 25,
-      morphTargetSize: 120
+      morphTargetSize: 120,
+      morphTargetSpread: 0.25,
+      morphTargetDetune: 20,
+      morphTargetAttack: 0.5,
+      morphTargetPan: 0.75,
+      // 各項參數獨立的「自動 / 手動」開關
+      params: {
+        position: false,
+        spread: false,
+        size: false,
+        density: false,
+        pitch: false,
+        detune: false,
+        attack: false,
+        pan: false
+      }
     }
   };
 
@@ -444,8 +459,8 @@
       const activeBuffer = state.sourceMode === 'mic' ? micAudioBuffer : sampleBuffer;
       if (!activeBuffer) return;
 
-      // 若為「相鄰步進漫步 (neighbor_step)」，每顆聲粒嚴格向相鄰左邊(-1步)或右邊(+1步)移動一步，並完全排除任何隨機擴散跳躍
-      if (state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
+      // 若開啟「掃描位置：自動」且為「相鄰步進漫步 (neighbor_step)」，每顆聲粒嚴格向相鄰左邊(-1步)或右邊(+1步)移動一步，排除任何跳躍
+      if (state.auto.params.position && state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
         const dir = Math.random() < 0.5 ? -1 : 1;
         // 單步距離與粒子長度相連，確保永遠只走到緊鄰的左側或右側微切片
         const stepSize = Math.max(0.004, Math.min(0.025, (durSec * 0.45) / Math.max(0.5, activeBuffer.duration)));
@@ -472,7 +487,7 @@
     } else if (state.sourceMode === 'osc') {
       // 振盪器粒子雲模式：根據掃描位置與擴散選擇音階泛音
       const scaleIntervals = SCALES[state.osc.scale] || SCALES.pentatonic;
-      if (state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
+      if (state.auto.params.position && state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
         // 在音階上嚴格只往相鄰左一音或右一音走一步，排除跳音
         const totalNotes = scaleIntervals.length;
         const currentNoteIdx = Math.round(state.grain.position * (totalNotes - 1));
@@ -536,9 +551,22 @@
   }
 
   // ==========================================
-  // REplay PLAYer 風格：自動化掃描、粒子由慢到快/由快到慢漸變與音高演化引擎
+  // 02 參數自動化演化與速度漸變引擎 (各參數皆可獨立設定手動 / 自動)
   // ==========================================
   let lastAutoUpdateMs = 0;
+
+  function setParamAutoState(paramKey, isAuto) {
+    state.auto.params[paramKey] = isAuto;
+    const btn = document.querySelector(`.param-auto-btn[data-param="${paramKey}"]`);
+    if (btn) {
+      btn.classList.toggle('active', isAuto);
+      btn.textContent = isAuto ? '自動' : '手動';
+    }
+  }
+
+  function hasAnyParamAuto() {
+    return Object.values(state.auto.params).some(Boolean);
+  }
 
   function updateAutomationEngine(nowMs) {
     if (!state.isRunning) return;
@@ -549,105 +577,172 @@
     if (!state.auto.rampStartTime) state.auto.rampStartTime = nowMs;
     const elapsedSec = (nowMs - state.auto.rampStartTime) / 1000;
 
-    // 1. 自動掃描位置演化 (Scan Mode: Walk / Loop / Jump / Pendulum；而 neighbor_step 會在每顆聲粒觸發時嚴格走相鄰 ±1 步)
-    if (
-      state.auto.scanMode !== 'manual' &&
-      state.auto.scanMode !== 'neighbor_step' &&
-      !state.isPointerDown &&
-      !isDraggingWave
-    ) {
-      let nextPos = state.grain.position;
-      if (state.auto.scanMode === 'loop') {
-        nextPos = (state.grain.position + dt / cycleSec) % 1.0;
-      } else if (state.auto.scanMode === 'pendulum') {
-        const phase = (elapsedSec / cycleSec) * Math.PI * 2;
-        nextPos = 0.5 + 0.45 * Math.sin(phase);
-      } else if (state.auto.scanMode === 'walk') {
-        if (Math.abs(state.grain.position - state.auto.walkTargetPos) < 0.03) {
-          state.auto.walkTargetPos = 0.05 + Math.random() * 0.9;
-        }
-        const walkSpeed = (1.2 / cycleSec) * dt;
-        nextPos += Math.sign(state.auto.walkTargetPos - state.grain.position) * walkSpeed;
-        nextPos = Math.max(0.02, Math.min(0.98, nextPos));
-      } else if (state.auto.scanMode === 'jump') {
-        if (Math.random() < (dt * 3.5) / Math.max(1, cycleSec * 0.25)) {
-          nextPos = 0.04 + Math.random() * 0.92;
-        }
-      }
-      setGrainPosition(Number(nextPos.toFixed(3)));
+    // 計算通用漸變曲線進度 (0 ~ 1)，供開啟「自動」的各項參數使用
+    let morphProgress = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2);
+    if (state.auto.tempoMode === 'accel') {
+      morphProgress = (elapsedSec % cycleSec) / cycleSec; // 由慢到快循環漸變 (0 -> 1)
+    } else if (state.auto.tempoMode === 'decel') {
+      morphProgress = 1 - (elapsedSec % cycleSec) / cycleSec; // 由快到慢循環漸變 (1 -> 0)
+    } else if (state.auto.tempoMode === 'pendulum') {
+      morphProgress = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2);
     }
 
-    // 2. 聲音粒子速度由慢到快 / 由快到慢漸變 (Speed Morph: Slow->Fast, Fast->Slow, Breathing, Random)
-    if (state.auto.tempoMode !== 'manual') {
-      let progress = 0; // 0 = 最慢 (稀疏長粒子), 1 = 最快 (高密短粒子)
-      if (state.auto.tempoMode === 'accel') {
-        // 由慢到快漸變 (到達最快後維持或循環)
-        progress = Math.min(1, elapsedSec / cycleSec);
-      } else if (state.auto.tempoMode === 'decel') {
-        // 由快到慢漸變
-        progress = Math.max(0, 1 - elapsedSec / cycleSec);
-      } else if (state.auto.tempoMode === 'pendulum') {
-        // 慢 ⇄ 快呼吸循環
-        progress = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2);
-      } else if (state.auto.tempoMode === 'random_morph') {
-        // REplay PLAYer Random Granularity Fade
-        if (Math.abs(state.grain.density - state.auto.morphTargetDensity) < 2) {
+    // 1. 掃描位置 (Position)：僅在 params.position 為「自動」時才自動移動
+    if (state.auto.params.position && !state.isPointerDown && !isDraggingWave) {
+      const activeScan = state.auto.scanMode === 'manual' ? 'walk' : state.auto.scanMode;
+      if (activeScan !== 'neighbor_step') {
+        let nextPos = state.grain.position;
+        if (activeScan === 'loop') {
+          nextPos = (state.grain.position + dt / cycleSec) % 1.0;
+        } else if (activeScan === 'pendulum') {
+          const phase = (elapsedSec / cycleSec) * Math.PI * 2;
+          nextPos = 0.5 + 0.45 * Math.sin(phase);
+        } else if (activeScan === 'walk') {
+          if (Math.abs(state.grain.position - state.auto.walkTargetPos) < 0.03) {
+            state.auto.walkTargetPos = 0.05 + Math.random() * 0.9;
+          }
+          const walkSpeed = (1.2 / cycleSec) * dt;
+          nextPos += Math.sign(state.auto.walkTargetPos - state.grain.position) * walkSpeed;
+          nextPos = Math.max(0.02, Math.min(0.98, nextPos));
+        } else if (activeScan === 'jump') {
+          if (Math.random() < (dt * 3.5) / Math.max(1, cycleSec * 0.25)) {
+            nextPos = 0.04 + Math.random() * 0.92;
+          }
+        }
+        setGrainPosition(Number(nextPos.toFixed(3)));
+      }
+    }
+
+    // 2. 位置擴散 (Spray)：當 params.spread 為「自動」時自動呼吸或隨速度漸變
+    if (state.auto.params.spread) {
+      let nextSpread = state.grain.spread;
+      if (state.auto.tempoMode === 'random_morph') {
+        if (Math.abs(state.grain.spread - state.auto.morphTargetSpread) < 0.03) {
+          state.auto.morphTargetSpread = 0.02 + Math.random() * 0.72;
+        }
+        nextSpread += (state.auto.morphTargetSpread - state.grain.spread) * dt * (2.5 / cycleSec);
+      } else {
+        const wave = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2 + 0.9);
+        const factor = (state.auto.tempoMode === 'accel' || state.auto.tempoMode === 'decel') ? morphProgress : wave;
+        nextSpread = 0.03 + factor * 0.65;
+      }
+      applySingleGrainParam('spread', nextSpread);
+    }
+
+    // 3. 發射密度/速度 (Density) 與 4. 粒子長度 (Grain Size)：各自根據獨立「自動」開關決定是否變化
+    if (state.auto.params.density || state.auto.params.size) {
+      let targetDensity = state.grain.density;
+      let targetSize = state.grain.sizeMs;
+
+      if (state.auto.tempoMode === 'random_morph') {
+        if (Math.abs(state.grain.density - state.auto.morphTargetDensity) < 3) {
           state.auto.morphTargetDensity = 4 + Math.random() * 58;
+        }
+        if (Math.abs(state.grain.sizeMs - state.auto.morphTargetSize) < 12) {
           state.auto.morphTargetSize = 22 + Math.random() * 340;
         }
-        const newDensity = state.grain.density + (state.auto.morphTargetDensity - state.grain.density) * dt * (2.5 / cycleSec);
-        const newSize = state.grain.sizeMs + (state.auto.morphTargetSize - state.grain.sizeMs) * dt * (2.5 / cycleSec);
-        applyGrainDensityAndSize(newDensity, newSize);
+        targetDensity = state.grain.density + (state.auto.morphTargetDensity - state.grain.density) * dt * (2.8 / cycleSec);
+        targetSize = state.grain.sizeMs + (state.auto.morphTargetSize - state.grain.sizeMs) * dt * (2.8 / cycleSec);
+      } else {
+        const curved = Math.pow(morphProgress, 1.3);
+        targetDensity = 3 + curved * 59; // 由慢 (3 /s) 到快 (62 /s)
+        targetSize = 360 - curved * 338; // 由長 (360 ms) 到短 (22 ms)
       }
 
-      if (state.auto.tempoMode !== 'random_morph') {
-        // 指數曲線映射：progress 0 (3 顆/秒, 360ms 長粒子) -> progress 1 (62 顆/秒, 22ms 極短微粒)
-        const curved = Math.pow(progress, 1.35);
-        const targetDensity = 3 + curved * 59;
-        const targetSize = 360 - curved * 338;
-        applyGrainDensityAndSize(targetDensity, targetSize);
-      }
+      if (state.auto.params.density) applySingleGrainParam('density', targetDensity);
+      if (state.auto.params.size) applySingleGrainParam('size', targetSize);
     }
 
-    // 3. 音高自動演化 (Pitch Morph: Glissando / Brownian / Rising)
-    if (state.auto.pitchMode !== 'manual') {
+    // 5. 音高偏移 (Pitch)：僅在 params.pitch 為「自動」時演化
+    if (state.auto.params.pitch) {
+      const activePitchMode = state.auto.pitchMode === 'manual' ? 'glissando' : state.auto.pitchMode;
       let nextPitch = state.grain.pitchSemitones;
-      if (state.auto.pitchMode === 'glissando') {
+      if (activePitchMode === 'glissando') {
         const phase = (elapsedSec / cycleSec) * Math.PI * 2;
         nextPitch = Math.round(Math.sin(phase) * 12);
-      } else if (state.auto.pitchMode === 'brownian') {
+      } else if (activePitchMode === 'brownian') {
         if (Math.random() < dt * 4) {
           const step = [-5, -3, -2, 2, 3, 5, 7][Math.floor(Math.random() * 7)];
           nextPitch = Math.max(-19, Math.min(19, nextPitch + step));
         }
-      } else if (state.auto.pitchMode === 'rising') {
+      } else if (activePitchMode === 'rising') {
         const norm = (elapsedSec % cycleSec) / cycleSec;
         nextPitch = Math.round(-12 + norm * 24);
       }
+      applySingleGrainParam('pitch', nextPitch);
+    }
 
-      if (nextPitch !== state.grain.pitchSemitones) {
-        state.grain.pitchSemitones = nextPitch;
-        const pitchEl = document.getElementById('grain-pitch');
-        const valEl = document.getElementById('val-grain-pitch');
-        if (pitchEl) pitchEl.value = nextPitch;
-        if (valEl) valEl.textContent = `${nextPitch >= 0 ? '+' : ''}${nextPitch} st`;
-      }
+    // 6. 隨機微調 (Shimmer / Detune)：當 params.detune 為「自動」時演化
+    if (state.auto.params.detune) {
+      const phase = (elapsedSec / cycleSec) * Math.PI * 2 + 1.7;
+      const nextDetune = Math.round(5 + (0.5 + 0.5 * Math.sin(phase)) * 75);
+      applySingleGrainParam('detune', nextDetune);
+    }
+
+    // 7. 包絡線形狀 (Envelope Attack)：當 params.attack 為「自動」時演化
+    if (state.auto.params.attack) {
+      const phase = (elapsedSec / cycleSec) * Math.PI * 2 + 2.6;
+      const nextAttack = Number((0.15 + (0.5 + 0.5 * Math.sin(phase)) * 0.7).toFixed(2));
+      applySingleGrainParam('attack', nextAttack);
+    }
+
+    // 8. 立體聲寬度 (Stereo Pan)：當 params.pan 為「自動」時演化
+    if (state.auto.params.pan) {
+      const phase = (elapsedSec / cycleSec) * Math.PI * 2 + 3.4;
+      const nextPan = Number((0.15 + (0.5 + 0.5 * Math.cos(phase)) * 0.85).toFixed(2));
+      applySingleGrainParam('pan', nextPan);
     }
   }
 
-  function applyGrainDensityAndSize(density, sizeMs) {
-    state.grain.density = Math.max(2, Math.min(65, density));
-    state.grain.sizeMs = Math.max(15, Math.min(450, sizeMs));
-
-    const denEl = document.getElementById('grain-density');
-    const denVal = document.getElementById('val-grain-density');
-    if (denEl) denEl.value = state.grain.density;
-    if (denVal) denVal.textContent = `${Math.round(state.grain.density)} /s`;
-
-    const sizeEl = document.getElementById('grain-size');
-    const sizeVal = document.getElementById('val-grain-size');
-    if (sizeEl) sizeEl.value = state.grain.sizeMs;
-    if (sizeVal) sizeVal.textContent = `${Math.round(state.grain.sizeMs)} ms`;
+  function applySingleGrainParam(paramKey, val) {
+    if (paramKey === 'spread') {
+      state.grain.spread = Math.max(0, Math.min(0.8, val));
+      const el = document.getElementById('grain-spread');
+      const vEl = document.getElementById('val-grain-spread');
+      if (el) el.value = state.grain.spread;
+      if (vEl) vEl.textContent = `${Math.round(state.grain.spread * 100)}%`;
+    } else if (paramKey === 'density') {
+      state.grain.density = Math.max(2, Math.min(65, val));
+      const el = document.getElementById('grain-density');
+      const vEl = document.getElementById('val-grain-density');
+      if (el) el.value = state.grain.density;
+      if (vEl) vEl.textContent = `${Math.round(state.grain.density)} /s`;
+    } else if (paramKey === 'size') {
+      state.grain.sizeMs = Math.max(15, Math.min(450, val));
+      const el = document.getElementById('grain-size');
+      const vEl = document.getElementById('val-grain-size');
+      if (el) el.value = state.grain.sizeMs;
+      if (vEl) vEl.textContent = `${Math.round(state.grain.sizeMs)} ms`;
+    } else if (paramKey === 'pitch') {
+      const p = Math.max(-24, Math.min(24, Math.round(val)));
+      state.grain.pitchSemitones = p;
+      const el = document.getElementById('grain-pitch');
+      const vEl = document.getElementById('val-grain-pitch');
+      if (el) el.value = p;
+      if (vEl) vEl.textContent = `${p >= 0 ? '+' : ''}${p} st`;
+    } else if (paramKey === 'detune') {
+      const d = Math.max(0, Math.min(100, Math.round(val)));
+      state.grain.detune = d;
+      const el = document.getElementById('grain-detune');
+      const vEl = document.getElementById('val-grain-detune');
+      if (el) el.value = d;
+      if (vEl) vEl.textContent = `${d}%`;
+    } else if (paramKey === 'attack') {
+      const a = Math.max(0.1, Math.min(0.9, val));
+      state.grain.attackRatio = a;
+      updateGrainWindow(a);
+      const el = document.getElementById('grain-attack');
+      const vEl = document.getElementById('val-grain-attack');
+      if (el) el.value = a;
+      if (vEl) vEl.textContent = `${Math.round(a * 100)}%`;
+    } else if (paramKey === 'pan') {
+      const pan = Math.max(0, Math.min(1, val));
+      state.grain.stereoPan = pan;
+      const el = document.getElementById('grain-pan');
+      const vEl = document.getElementById('val-grain-pan');
+      if (el) el.value = pan;
+      if (vEl) vEl.textContent = `${Math.round(pan * 100)}%`;
+    }
   }
 
   // 粒子排程器迴圈 (支援滑鼠、HOLD、視訊鏡頭體感動作與自動演化觸發)
@@ -656,10 +751,7 @@
     updateAutomationEngine(timestamp);
 
     const motionTriggered = state.webcamActive && state.camMotionEnergy > 0.04;
-    const autoActive =
-      state.auto.scanMode !== 'manual' ||
-      state.auto.tempoMode !== 'manual' ||
-      state.auto.pitchMode !== 'manual';
+    const autoActive = hasAnyParamAuto();
     const shouldEmit = state.isRunning && (state.isHold || state.isPointerDown || motionTriggered || autoActive);
     if (!shouldEmit) return;
 
@@ -1508,27 +1600,101 @@
   });
   bindSlider('grain-pan', (v) => { state.grain.stereoPan = v; return `${Math.round(v * 100)}%`; });
 
-  // REplay PLAYer 風格自動演化與速度漸變控制項綁定
+  // 02 區塊各參數獨立「手動 / 自動」按鈕與選單連動綁定
   const scanModeSel = document.getElementById('auto-scan-mode');
   const tempoModeSel = document.getElementById('auto-tempo-mode');
   const pitchModeSel = document.getElementById('auto-pitch-mode');
 
-  scanModeSel.addEventListener('change', (e) => {
-    state.auto.scanMode = e.target.value;
+  document.querySelectorAll('.param-auto-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const paramKey = btn.dataset.param;
+      const nextAuto = !state.auto.params[paramKey];
+      setParamAutoState(paramKey, nextAuto);
+      state.auto.rampStartTime = performance.now();
+
+      // 若開啟「掃描位置：自動」且下拉選單仍為 manual，自動切為平滑漫步
+      if (paramKey === 'position' && nextAuto && state.auto.scanMode === 'manual') {
+        scanModeSel.value = 'walk';
+        state.auto.scanMode = 'walk';
+      } else if (paramKey === 'position' && !nextAuto) {
+        scanModeSel.value = 'manual';
+        state.auto.scanMode = 'manual';
+      }
+
+      // 若開啟「速度/密度、粒子長度或位置擴散：自動」且速度選單為 manual，自動切為呼吸循環
+      if ((paramKey === 'density' || paramKey === 'size' || paramKey === 'spread') && nextAuto && state.auto.tempoMode === 'manual') {
+        tempoModeSel.value = 'pendulum';
+        state.auto.tempoMode = 'pendulum';
+      }
+
+      // 若開啟「音高：自動」且音高選單為 manual，自動切為滑音漫遊
+      if (paramKey === 'pitch' && nextAuto && state.auto.pitchMode === 'manual') {
+        pitchModeSel.value = 'glissando';
+        state.auto.pitchMode = 'glissando';
+      } else if (paramKey === 'pitch' && !nextAuto) {
+        pitchModeSel.value = 'manual';
+        state.auto.pitchMode = 'manual';
+      }
+
+      if (nextAuto && !state.isRunning) toggleEnginePower(true);
+    });
+  });
+
+  // 全自動 / 全手動 快捷鍵
+  document.getElementById('btn-all-auto').addEventListener('click', () => {
+    if (!state.isRunning) toggleEnginePower(true);
     state.auto.rampStartTime = performance.now();
-    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+    Object.keys(state.auto.params).forEach((k) => setParamAutoState(k, true));
+    if (state.auto.scanMode === 'manual') {
+      scanModeSel.value = 'walk';
+      state.auto.scanMode = 'walk';
+    }
+    if (state.auto.tempoMode === 'manual') {
+      tempoModeSel.value = 'pendulum';
+      state.auto.tempoMode = 'pendulum';
+    }
+    if (state.auto.pitchMode === 'manual') {
+      pitchModeSel.value = 'glissando';
+      state.auto.pitchMode = 'glissando';
+    }
+  });
+
+  document.getElementById('btn-all-manual').addEventListener('click', () => {
+    Object.keys(state.auto.params).forEach((k) => setParamAutoState(k, false));
+    scanModeSel.value = 'manual';
+    tempoModeSel.value = 'manual';
+    pitchModeSel.value = 'manual';
+    state.auto.scanMode = 'manual';
+    state.auto.tempoMode = 'manual';
+    state.auto.pitchMode = 'manual';
+  });
+
+  scanModeSel.addEventListener('change', (e) => {
+    const val = e.target.value;
+    state.auto.scanMode = val;
+    state.auto.rampStartTime = performance.now();
+    setParamAutoState('position', val !== 'manual');
+    if (val !== 'manual' && !state.isRunning) toggleEnginePower(true);
   });
 
   tempoModeSel.addEventListener('change', (e) => {
-    state.auto.tempoMode = e.target.value;
+    const val = e.target.value;
+    state.auto.tempoMode = val;
     state.auto.rampStartTime = performance.now();
-    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+    const isAuto = val !== 'manual';
+    // 切換粒子速度變化模式時，同步連動「發射密度/速度」、「粒子長度」與「位置擴散」的自動開關（使用者仍可隨時單獨點按鈕關閉其中任一項）
+    setParamAutoState('density', isAuto);
+    setParamAutoState('size', isAuto);
+    setParamAutoState('spread', isAuto);
+    if (isAuto && !state.isRunning) toggleEnginePower(true);
   });
 
   pitchModeSel.addEventListener('change', (e) => {
-    state.auto.pitchMode = e.target.value;
+    const val = e.target.value;
+    state.auto.pitchMode = val;
     state.auto.rampStartTime = performance.now();
-    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+    setParamAutoState('pitch', val !== 'manual');
+    if (val !== 'manual' && !state.isRunning) toggleEnginePower(true);
   });
 
   bindSlider('auto-cycle-sec', (v) => {
@@ -1541,7 +1707,12 @@
     tempoModeSel.value = 'accel';
     state.auto.tempoMode = 'accel';
     state.auto.rampStartTime = performance.now();
-    applyGrainDensityAndSize(3, 360);
+    setParamAutoState('density', true);
+    setParamAutoState('size', true);
+    setParamAutoState('spread', true);
+    applySingleGrainParam('density', 3);
+    applySingleGrainParam('size', 360);
+    applySingleGrainParam('spread', 0.04);
   });
 
   document.getElementById('btn-trigger-decel').addEventListener('click', () => {
@@ -1549,16 +1720,16 @@
     tempoModeSel.value = 'decel';
     state.auto.tempoMode = 'decel';
     state.auto.rampStartTime = performance.now();
-    applyGrainDensityAndSize(62, 22);
+    setParamAutoState('density', true);
+    setParamAutoState('size', true);
+    setParamAutoState('spread', true);
+    applySingleGrainParam('density', 62);
+    applySingleGrainParam('size', 22);
+    applySingleGrainParam('spread', 0.65);
   });
 
   document.getElementById('btn-stop-auto').addEventListener('click', () => {
-    scanModeSel.value = 'manual';
-    tempoModeSel.value = 'manual';
-    pitchModeSel.value = 'manual';
-    state.auto.scanMode = 'manual';
-    state.auto.tempoMode = 'manual';
-    state.auto.pitchMode = 'manual';
+    document.getElementById('btn-all-manual').click();
   });
 
   // 效果器滑桿綁定

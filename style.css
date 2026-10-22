@@ -562,6 +562,43 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 4px;
+}
+
+.header-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-right-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.param-auto-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.param-auto-btn:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.param-auto-btn.active {
+  background: rgba(255, 184, 0, 0.22);
+  color: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 8px rgba(255, 184, 0, 0.3);
 }
 
 .control-item label {

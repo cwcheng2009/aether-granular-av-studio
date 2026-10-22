@@ -180,14 +180,21 @@
       <div class="panel-section">
         <div class="section-header">
           <h2>02 // 聲音粒子化合成 (GRANULAR)</h2>
-          <button class="mini-btn" id="btn-random-grain" title="隨機化粒子合成參數">隨機靈感</button>
+          <div class="header-btn-group">
+            <button class="mini-btn" id="btn-all-auto" title="將 02 所有參數切換為自動演化">全自動</button>
+            <button class="mini-btn" id="btn-all-manual" title="將 02 所有參數切換回手動控制">全手動</button>
+            <button class="mini-btn" id="btn-random-grain" title="隨機化粒子合成參數">隨機靈感</button>
+          </div>
         </div>
 
         <div class="control-grid">
           <div class="control-item">
             <div class="label-row">
               <label for="grain-position">掃描位置 (Position)</label>
-              <span class="val-readout" id="val-grain-position">35%</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="position" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-position">35%</span>
+              </div>
             </div>
             <input type="range" id="grain-position" min="0" max="1" step="0.005" value="0.35" />
           </div>
@@ -195,7 +202,10 @@
           <div class="control-item">
             <div class="label-row">
               <label for="grain-spread">位置擴散 (Spray)</label>
-              <span class="val-readout" id="val-grain-spread">15%</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="spread" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-spread">15%</span>
+              </div>
             </div>
             <input type="range" id="grain-spread" min="0" max="0.8" step="0.01" value="0.15" />
           </div>
@@ -203,15 +213,21 @@
           <div class="control-item">
             <div class="label-row">
               <label for="grain-size">粒子長度 (Grain Size)</label>
-              <span class="val-readout" id="val-grain-size">120 ms</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="size" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-size">120 ms</span>
+              </div>
             </div>
             <input type="range" id="grain-size" min="15" max="450" step="1" value="120" />
           </div>
 
           <div class="control-item">
             <div class="label-row">
-              <label for="grain-density">發射密度 (Density)</label>
-              <span class="val-readout" id="val-grain-density">22 /s</span>
+              <label for="grain-density">發射密度/速度 (Density)</label>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="density" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-density">22 /s</span>
+              </div>
             </div>
             <input type="range" id="grain-density" min="2" max="65" step="1" value="22" />
           </div>
@@ -219,15 +235,21 @@
           <div class="control-item">
             <div class="label-row">
               <label for="grain-pitch">音高偏移 (Pitch)</label>
-              <span class="val-readout" id="val-grain-pitch">+0 st</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="pitch" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-pitch">+0 st</span>
+              </div>
             </div>
             <input type="range" id="grain-pitch" min="-24" max="24" step="1" value="0" />
           </div>
 
           <div class="control-item">
             <div class="label-row">
-              <label for="grain-detune">粒子隨機微調 (Shimmer)</label>
-              <span class="val-readout" id="val-grain-detune">12%</span>
+              <label for="grain-detune">隨機微調 (Shimmer)</label>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="detune" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-detune">12%</span>
+              </div>
             </div>
             <input type="range" id="grain-detune" min="0" max="100" step="1" value="12" />
           </div>
@@ -235,7 +257,10 @@
           <div class="control-item">
             <div class="label-row">
               <label for="grain-attack">包絡線形狀 (Envelope)</label>
-              <span class="val-readout" id="val-grain-attack">50%</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="attack" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-attack">50%</span>
+              </div>
             </div>
             <input type="range" id="grain-attack" min="0.1" max="0.9" step="0.05" value="0.5" />
           </div>
@@ -243,15 +268,18 @@
           <div class="control-item">
             <div class="label-row">
               <label for="grain-pan">立體聲寬度 (Stereo Pan)</label>
-              <span class="val-readout" id="val-grain-pan">75%</span>
+              <div class="label-right-group">
+                <button class="param-auto-btn" data-param="pan" title="切換此參數為「手動」或「自動」">手動</button>
+                <span class="val-readout" id="val-grain-pan">75%</span>
+              </div>
             </div>
             <input type="range" id="grain-pan" min="0" max="1" step="0.05" value="0.75" />
           </div>
         </div>
 
-        <!-- REplay PLAYer 風格：自動化掃描、速度由慢到快/快到慢漸變與音高演化 -->
+        <!-- 自動演化與速度漸變設定 -->
         <div class="automation-subbox">
-          <div class="subbox-title">AUTO-POETIC AUTOMATION // 自動演化與速度漸變 (REplay Mode)</div>
+          <div class="subbox-title">AUTO-POETIC AUTOMATION // 自動演化與速度漸變</div>
           <div class="control-grid">
             <div class="control-item">
               <label for="auto-scan-mode">自動掃描模式 (Scan Mode)</label>
@@ -295,8 +323,8 @@
             </div>
           </div>
           <div class="ramp-actions">
-            <button class="mini-btn" id="btn-trigger-accel" title="立即從極慢粒子加速至極快高密粒子">▶ 觸發：由慢到快</button>
-            <button class="mini-btn" id="btn-trigger-decel" title="立即從極快高密粒子減速至極慢長粒子">▶ 觸發：由快到慢</button>
+            <button class="mini-btn" id="btn-trigger-accel" title="立即啟用速度與擴散自動漸變：由慢到快">▶ 觸發：由慢到快</button>
+            <button class="mini-btn" id="btn-trigger-decel" title="立即啟用速度與擴散自動漸變：由快到慢">▶ 觸發：由快到慢</button>
             <button class="mini-btn" id="btn-stop-auto" title="停止所有自動化歸回手動控制">■ 停止自動演化</button>
           </div>
         </div>
