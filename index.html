@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2.2" />
 </head>
 <body>
   <!-- 主 WebGL / 2D 混合粒子特效畫布 -->
@@ -21,7 +21,7 @@
         <span class="pulse-dot"></span>
         <span class="brand-title">AETHER</span>
       </div>
-      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v1.0</span></span>
+      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v2.2</span></span>
     </div>
 
     <!-- 訊號源切換 -->
@@ -192,7 +192,7 @@
             <div class="label-row">
               <label for="grain-position">掃描位置 (Position)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="position" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="position" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-position">35%</span>
               </div>
             </div>
@@ -203,7 +203,7 @@
             <div class="label-row">
               <label for="grain-spread">位置擴散 (Spray)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="spread" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="spread" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-spread">15%</span>
               </div>
             </div>
@@ -214,7 +214,7 @@
             <div class="label-row">
               <label for="grain-size">粒子長度 (Grain Size)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="size" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="size" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-size">120 ms</span>
               </div>
             </div>
@@ -225,7 +225,7 @@
             <div class="label-row">
               <label for="grain-density">發射密度/速度 (Density)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="density" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="density" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-density">22 /s</span>
               </div>
             </div>
@@ -236,7 +236,7 @@
             <div class="label-row">
               <label for="grain-pitch">音高偏移 (Pitch)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="pitch" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="pitch" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-pitch">+0 st</span>
               </div>
             </div>
@@ -247,7 +247,7 @@
             <div class="label-row">
               <label for="grain-detune">隨機微調 (Shimmer)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="detune" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="detune" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-detune">12%</span>
               </div>
             </div>
@@ -258,7 +258,7 @@
             <div class="label-row">
               <label for="grain-attack">包絡線形狀 (Envelope)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="attack" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="attack" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-attack">50%</span>
               </div>
             </div>
@@ -269,7 +269,7 @@
             <div class="label-row">
               <label for="grain-pan">立體聲寬度 (Stereo Pan)</label>
               <div class="label-right-group">
-                <button class="param-auto-btn" data-param="pan" title="切換此參數為「手動」或「自動」">手動</button>
+                <button type="button" class="param-auto-btn" data-param="pan" title="點擊切換：手動 ⇄ 自動">手動</button>
                 <span class="val-readout" id="val-grain-pan">75%</span>
               </div>
             </div>
@@ -529,6 +529,6 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2.2"></script>
 </body>
 </html>

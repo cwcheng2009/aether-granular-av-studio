@@ -569,9 +569,9 @@
   }
 
   function updateAutomationEngine(nowMs) {
-    if (!state.isRunning) return;
     const dt = Math.min(0.1, (nowMs - (lastAutoUpdateMs || nowMs)) / 1000);
     lastAutoUpdateMs = nowMs;
+    if (!hasAnyParamAuto()) return;
 
     const cycleSec = Math.max(2, state.auto.cycleSec);
     if (!state.auto.rampStartTime) state.auto.rampStartTime = nowMs;
@@ -1606,11 +1606,15 @@
   const pitchModeSel = document.getElementById('auto-pitch-mode');
 
   document.querySelectorAll('.param-auto-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const paramKey = btn.dataset.param;
       const nextAuto = !state.auto.params[paramKey];
       setParamAutoState(paramKey, nextAuto);
-      state.auto.rampStartTime = performance.now();
+      if (!state.auto.rampStartTime) {
+        state.auto.rampStartTime = performance.now();
+      }
 
       // 若開啟「掃描位置：自動」且下拉選單仍為 manual，自動切為平滑漫步
       if (paramKey === 'position' && nextAuto && state.auto.scanMode === 'manual') {
@@ -1625,6 +1629,11 @@
       if ((paramKey === 'density' || paramKey === 'size' || paramKey === 'spread') && nextAuto && state.auto.tempoMode === 'manual') {
         tempoModeSel.value = 'pendulum';
         state.auto.tempoMode = 'pendulum';
+      } else if ((paramKey === 'density' || paramKey === 'size' || paramKey === 'spread') && !nextAuto) {
+        if (!state.auto.params.density && !state.auto.params.size && !state.auto.params.spread) {
+          tempoModeSel.value = 'manual';
+          state.auto.tempoMode = 'manual';
+        }
       }
 
       // 若開啟「音高：自動」且音高選單為 manual，自動切為滑音漫遊
