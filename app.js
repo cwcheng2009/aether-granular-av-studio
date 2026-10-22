@@ -66,8 +66,8 @@
       trails: 0.86,
       glitch: 0.35,
       particleSize: 2.2,
-      camOpacity: 0.45, // 0 ~ 1 攝影機背景影像疊加透明度
-      camClarity: 0.85  // 0 ~ 1 攝影機背景影像清晰度 (1 = 銳利清晰, 0 = 夢幻柔焦模糊)
+      camOpacity: 0.65, // 0 ~ 1 攝影機背景影像疊加亮度
+      camClarity: 1.0   // 0 ~ 1 攝影機背景影像清晰度 (1 = 銳利清晰, 0 = 夢幻柔焦模糊)
     },
 
     // 執行期統計與視訊鏡頭體感偵測狀態
@@ -843,37 +843,33 @@
     const t = nowMs * 0.001;
     const palette = PALETTES[state.visual.palette] || PALETTES.cyberpunk;
 
-    // 1. 殘影拖尾背景覆蓋
+    // 1. 背景覆蓋與視訊鏡頭實景繪製
     const fadeAlpha = Math.max(0.04, 1 - state.visual.trails);
     fxCtx.globalCompositeOperation = 'source-over';
-    fxCtx.fillStyle = `rgba(6, 7, 12, ${fadeAlpha})`;
-    fxCtx.fillRect(0, 0, w, h);
 
-    // 若開啟視訊鏡頭，擷取低解析度像素陣列供粒子吸附、發光與體感動作發聲偵測，並根據設定疊加背景清晰攝影機畫面
     if (state.webcamActive && webcamVideo.readyState >= 2) {
       camSampleCtx.save();
-      camSampleCtx.scale(-1, 1); // 鏡像翻轉
+      camSampleCtx.scale(-1, 1); // 鏡像翻轉供體感偵測與粒子取色
       camSampleCtx.drawImage(webcamVideo, -camSampleCanvas.width, 0, camSampleCanvas.width, camSampleCanvas.height);
       camSampleCtx.restore();
       camPixelData = camSampleCtx.getImageData(0, 0, camSampleCanvas.width, camSampleCanvas.height).data;
       analyzeWebcamMotion(camPixelData);
 
-      // 繪製背景攝影機實景影像 (支援自由調整疊加透明度與清晰度/柔焦程度，與前景粒子特效重疊)
       if (state.visual.camOpacity > 0.01) {
+        // 先鋪一層深色底避免殘影過曝，接著直接繪製清晰完整的攝影機實景畫面
+        fxCtx.fillStyle = `rgba(6, 7, 12, ${Math.max(fadeAlpha, state.visual.camOpacity * 0.65)})`;
+        fxCtx.fillRect(0, 0, w, h);
+
         fxCtx.save();
         fxCtx.globalCompositeOperation = 'source-over';
-        // 當有殘影時，適度調整每幀繪入透明度避免過曝，同時保持影像清晰可見
-        const effectiveAlpha = state.visual.camOpacity * (0.28 + fadeAlpha * 0.72);
-        fxCtx.globalAlpha = Math.min(1, effectiveAlpha);
+        fxCtx.globalAlpha = state.visual.camOpacity;
 
-        const blurPx = Math.round((1 - state.visual.camClarity) * 20);
-        const contrastPct = Math.round(95 + state.visual.camClarity * 25 + audioEnergy.bass * 18);
-        const saturatePct = Math.round(90 + state.visual.camClarity * 35);
-        fxCtx.filter = blurPx > 0
-          ? `blur(${blurPx}px) contrast(${contrastPct}%) saturate(${saturatePct}%)`
-          : `contrast(${contrastPct}%) saturate(${saturatePct}%)`;
+        const blurPx = Math.round((1 - state.visual.camClarity) * 18);
+        if (blurPx > 0) {
+          fxCtx.filter = `blur(${blurPx}px)`;
+        }
 
-        // 鏡像翻轉並等比例滿版繪製攝影機畫面
+        // 鏡像翻轉並等比例滿版繪製高畫質攝影機實景
         fxCtx.translate(w, 0);
         fxCtx.scale(-1, 1);
         const vw = webcamVideo.videoWidth || 640;
@@ -883,10 +879,15 @@
         const drawH = vh * scale;
         fxCtx.drawImage(webcamVideo, (w - drawW) * 0.5, (h - drawH) * 0.5, drawW, drawH);
         fxCtx.restore();
+      } else {
+        fxCtx.fillStyle = `rgba(6, 7, 12, ${fadeAlpha})`;
+        fxCtx.fillRect(0, 0, w, h);
       }
     } else {
       camPixelData = null;
       state.camMotionEnergy *= 0.85;
+      fxCtx.fillStyle = `rgba(6, 7, 12, ${fadeAlpha})`;
+      fxCtx.fillRect(0, 0, w, h);
     }
 
     // 開啟加法混色發光效果
