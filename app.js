@@ -444,9 +444,22 @@
       const activeBuffer = state.sourceMode === 'mic' ? micAudioBuffer : sampleBuffer;
       if (!activeBuffer) return;
 
-      // 計算隨機擴散後的取樣起點
-      const jitter = (Math.random() * 2 - 1) * state.grain.spread * 0.5;
-      normalizedPos = (state.grain.position + jitter + 1.0) % 1.0;
+      // 若為「相鄰步進漫步 (neighbor_step)」，每顆聲粒嚴格向相鄰左邊(-1步)或右邊(+1步)移動一步，並完全排除任何隨機擴散跳躍
+      if (state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        // 單步距離與粒子長度相連，確保永遠只走到緊鄰的左側或右側微切片
+        const stepSize = Math.max(0.004, Math.min(0.025, (durSec * 0.45) / Math.max(0.5, activeBuffer.duration)));
+        let nextPos = state.grain.position + dir * stepSize;
+        if (nextPos < 0.01) nextPos = 0.01 + stepSize;
+        if (nextPos > 0.99) nextPos = 0.99 - stepSize;
+        setGrainPosition(Number(nextPos.toFixed(4)));
+        normalizedPos = state.grain.position;
+      } else {
+        // 一般模式：計算隨機擴散後的取樣起點
+        const jitter = (Math.random() * 2 - 1) * state.grain.spread * 0.5;
+        normalizedPos = (state.grain.position + jitter + 1.0) % 1.0;
+      }
+
       const maxOffset = Math.max(0.01, activeBuffer.duration - durSec * playbackRate - 0.01);
       const offsetSec = normalizedPos * maxOffset;
 
@@ -459,8 +472,21 @@
     } else if (state.sourceMode === 'osc') {
       // 振盪器粒子雲模式：根據掃描位置與擴散選擇音階泛音
       const scaleIntervals = SCALES[state.osc.scale] || SCALES.pentatonic;
-      const jitter = (Math.random() * 2 - 1) * state.grain.spread * 0.6;
-      normalizedPos = Math.max(0, Math.min(1, state.grain.position + jitter));
+      if (state.auto.scanMode === 'neighbor_step' && !state.isPointerDown && !isDraggingWave) {
+        // 在音階上嚴格只往相鄰左一音或右一音走一步，排除跳音
+        const totalNotes = scaleIntervals.length;
+        const currentNoteIdx = Math.round(state.grain.position * (totalNotes - 1));
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        let nextNoteIdx = currentNoteIdx + dir;
+        if (nextNoteIdx < 0) nextNoteIdx = 1;
+        if (nextNoteIdx >= totalNotes) nextNoteIdx = totalNotes - 2;
+        const nextPos = nextNoteIdx / Math.max(1, totalNotes - 1);
+        setGrainPosition(Number(nextPos.toFixed(4)));
+        normalizedPos = state.grain.position;
+      } else {
+        const jitter = (Math.random() * 2 - 1) * state.grain.spread * 0.6;
+        normalizedPos = Math.max(0, Math.min(1, state.grain.position + jitter));
+      }
 
       const noteIndex = Math.floor(normalizedPos * (scaleIntervals.length - 0.01));
       const scaleSemitone = scaleIntervals[noteIndex] || 0;
@@ -523,8 +549,13 @@
     if (!state.auto.rampStartTime) state.auto.rampStartTime = nowMs;
     const elapsedSec = (nowMs - state.auto.rampStartTime) / 1000;
 
-    // 1. 自動掃描位置演化 (Scan Mode: Walk / Loop / Jump / Pendulum)
-    if (state.auto.scanMode !== 'manual' && !state.isPointerDown && !isDraggingWave) {
+    // 1. 自動掃描位置演化 (Scan Mode: Walk / Loop / Jump / Pendulum；而 neighbor_step 會在每顆聲粒觸發時嚴格走相鄰 ±1 步)
+    if (
+      state.auto.scanMode !== 'manual' &&
+      state.auto.scanMode !== 'neighbor_step' &&
+      !state.isPointerDown &&
+      !isDraggingWave
+    ) {
       let nextPos = state.grain.position;
       if (state.auto.scanMode === 'loop') {
         nextPos = (state.grain.position + dt / cycleSec) % 1.0;
