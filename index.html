@@ -52,9 +52,14 @@
         <span>HOLD</span>
       </button>
 
+      <button class="action-btn record-btn audio-rec-btn" id="btn-record-audio" title="僅錄製無損 WAV 立體聲音訊檔案">
+        <span class="rec-dot audio-dot"></span>
+        <span id="record-audio-label">錄音 WAV</span>
+      </button>
+
       <button class="action-btn record-btn" id="btn-record" title="錄製畫面與聲音輸出為 MP4 影片">
         <span class="rec-dot"></span>
-        <span id="record-label">錄製 MP4</span>
+        <span id="record-label">錄影 MP4</span>
       </button>
 
       <button class="action-btn icon-only" id="btn-toggle-ui" title="隱藏 / 顯示控制面板 (H)">
@@ -241,6 +246,57 @@
               <span class="val-readout" id="val-grain-pan">75%</span>
             </div>
             <input type="range" id="grain-pan" min="0" max="1" step="0.05" value="0.75" />
+          </div>
+        </div>
+
+        <!-- REplay PLAYer 風格：自動化掃描、速度由慢到快/快到慢漸變與音高演化 -->
+        <div class="automation-subbox">
+          <div class="subbox-title">AUTO-POETIC AUTOMATION // 自動演化與速度漸變 (REplay Mode)</div>
+          <div class="control-grid">
+            <div class="control-item">
+              <label for="auto-scan-mode">自動掃描模式 (Scan Mode)</label>
+              <select id="auto-scan-mode" class="cyber-select">
+                <option value="manual">手動固定 (Freeze / Scrub)</option>
+                <option value="walk">平滑漫步 (Smooth Walk)</option>
+                <option value="loop">循環推進 (Loop Forward)</option>
+                <option value="jump">隨機跳躍 (Random Jump)</option>
+                <option value="pendulum">鐘擺來回 (Pendulum)</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <label for="auto-tempo-mode">粒子速度變化 (Speed Morph)</label>
+              <select id="auto-tempo-mode" class="cyber-select">
+                <option value="manual">固定密度與大小 (Manual)</option>
+                <option value="accel">由慢到快漸變 (Slow → Fast)</option>
+                <option value="decel">由快到慢漸變 (Fast → Slow)</option>
+                <option value="pendulum">慢⇄快呼吸循環 (Breathing Wave)</option>
+                <option value="random_morph">隨機漸變演化 (Auto Morph)</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <label for="auto-pitch-mode">音高自動演化 (Pitch Morph)</label>
+              <select id="auto-pitch-mode" class="cyber-select">
+                <option value="manual">手動音高 (Manual Pitch)</option>
+                <option value="glissando">平滑滑音漫遊 (Glissando)</option>
+                <option value="brownian">布朗隨機跳音 (Jumping)</option>
+                <option value="rising">八度螺旋上揚 (Rising Shimmer)</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <div class="label-row">
+                <label for="auto-cycle-sec">漸變週期時間 (Morph Time)</label>
+                <span class="val-readout" id="val-auto-cycle-sec">8.0 s</span>
+              </div>
+              <input type="range" id="auto-cycle-sec" min="2" max="30" step="0.5" value="8" />
+            </div>
+          </div>
+          <div class="ramp-actions">
+            <button class="mini-btn" id="btn-trigger-accel" title="立即從極慢粒子加速至極快高密粒子">▶ 觸發：由慢到快</button>
+            <button class="mini-btn" id="btn-trigger-decel" title="立即從極快高密粒子減速至極慢長粒子">▶ 觸發：由快到慢</button>
+            <button class="mini-btn" id="btn-stop-auto" title="停止所有自動化歸回手動控制">■ 停止自動演化</button>
           </div>
         </div>
       </div>

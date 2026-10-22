@@ -218,11 +218,45 @@ html, body {
   background: var(--magenta);
 }
 
+.record-btn .rec-dot.audio-dot {
+  background: var(--amber);
+}
+
 .record-btn.recording {
   background: rgba(255, 42, 133, 0.22);
   border-color: var(--magenta);
   color: #fff;
   animation: recBlink 1s infinite alternate;
+}
+
+.record-btn.audio-rec-btn.recording {
+  background: rgba(255, 184, 0, 0.24);
+  border-color: var(--amber);
+}
+
+/* 自動演化控制子區塊 (REplay Mode) */
+.automation-subbox {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 240, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.subbox-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.6px;
+}
+
+.ramp-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 @keyframes recBlink {

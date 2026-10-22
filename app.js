@@ -75,7 +75,20 @@
     recentGrainTriggers: [], // 儲存最近觸發的聲粒供波形圖與視覺爆發顯示
     camMotionEnergy: 0,      // 0 ~ 1 鏡頭畫面動作能量
     camMotionX: 0.5,         // 鏡頭動作重心 X (0 ~ 1)
-    camMotionY: 0.5          // 鏡頭動作重心 Y (0 ~ 1)
+    camMotionY: 0.5,         // 鏡頭動作重心 Y (0 ~ 1)
+
+    // REplay PLAYer 風格自動演化與速度漸變參數
+    auto: {
+      scanMode: 'manual',    // 'manual' | 'walk' | 'loop' | 'jump' | 'pendulum'
+      tempoMode: 'manual',   // 'manual' | 'accel' | 'decel' | 'pendulum' | 'random_morph'
+      pitchMode: 'manual',   // 'manual' | 'glissando' | 'brownian' | 'rising'
+      cycleSec: 8.0,         // 漸變週期秒數 (2 ~ 30s)
+      rampStartTime: 0,      // 單次或循環漸變起點時間 (ms)
+      walkTargetPos: 0.5,
+      glissTargetPitch: 0,
+      morphTargetDensity: 25,
+      morphTargetSize: 120
+    }
   };
 
   // 音階半音對照表
@@ -128,6 +141,12 @@
   let masterGainNode = null;
   let analyserNode = null;
   let mediaStreamDest = null; // 供影音錄製使用
+
+  // 純音訊 WAV 錄製專用緩衝區
+  let isRecordingWav = false;
+  let wavLeftChunks = [];
+  let wavRightChunks = [];
+  let wavRecorderNode = null;
 
   // 音訊緩衝區
   let sampleBuffer = null;     // 目前載入的音檔或內建取樣 Buffer
@@ -225,6 +244,21 @@
     // 建立錄影用的音訊輸出節點
     mediaStreamDest = audioCtx.createMediaStreamDestination();
     masterGainNode.connect(mediaStreamDest);
+
+    // 建立純音訊無損 WAV 錄製節點 (雙聲道 16-bit PCM)
+    wavRecorderNode = audioCtx.createScriptProcessor(4096, 2, 2);
+    wavRecorderNode.onaudioprocess = (e) => {
+      if (!isRecordingWav) return;
+      const inL = e.inputBuffer.getChannelData(0);
+      const inR = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : inL;
+      wavLeftChunks.push(new Float32Array(inL));
+      wavRightChunks.push(new Float32Array(inR));
+    };
+    const silentWavOut = audioCtx.createGain();
+    silentWavOut.gain.value = 0;
+    masterGainNode.connect(wavRecorderNode);
+    wavRecorderNode.connect(silentWavOut);
+    silentWavOut.connect(audioCtx.destination);
 
     // 初始化麥克風 4 秒循環緩衝區
     const ringLen = audioCtx.sampleRate * 4;
@@ -475,11 +509,127 @@
     burstVisualParticles(normalizedPos, panVal);
   }
 
-  // 粒子排程器迴圈 (支援滑鼠、HOLD 與視訊鏡頭體感動作觸發)
+  // ==========================================
+  // REplay PLAYer 風格：自動化掃描、粒子由慢到快/由快到慢漸變與音高演化引擎
+  // ==========================================
+  let lastAutoUpdateMs = 0;
+
+  function updateAutomationEngine(nowMs) {
+    if (!state.isRunning) return;
+    const dt = Math.min(0.1, (nowMs - (lastAutoUpdateMs || nowMs)) / 1000);
+    lastAutoUpdateMs = nowMs;
+
+    const cycleSec = Math.max(2, state.auto.cycleSec);
+    if (!state.auto.rampStartTime) state.auto.rampStartTime = nowMs;
+    const elapsedSec = (nowMs - state.auto.rampStartTime) / 1000;
+
+    // 1. 自動掃描位置演化 (Scan Mode: Walk / Loop / Jump / Pendulum)
+    if (state.auto.scanMode !== 'manual' && !state.isPointerDown && !isDraggingWave) {
+      let nextPos = state.grain.position;
+      if (state.auto.scanMode === 'loop') {
+        nextPos = (state.grain.position + dt / cycleSec) % 1.0;
+      } else if (state.auto.scanMode === 'pendulum') {
+        const phase = (elapsedSec / cycleSec) * Math.PI * 2;
+        nextPos = 0.5 + 0.45 * Math.sin(phase);
+      } else if (state.auto.scanMode === 'walk') {
+        if (Math.abs(state.grain.position - state.auto.walkTargetPos) < 0.03) {
+          state.auto.walkTargetPos = 0.05 + Math.random() * 0.9;
+        }
+        const walkSpeed = (1.2 / cycleSec) * dt;
+        nextPos += Math.sign(state.auto.walkTargetPos - state.grain.position) * walkSpeed;
+        nextPos = Math.max(0.02, Math.min(0.98, nextPos));
+      } else if (state.auto.scanMode === 'jump') {
+        if (Math.random() < (dt * 3.5) / Math.max(1, cycleSec * 0.25)) {
+          nextPos = 0.04 + Math.random() * 0.92;
+        }
+      }
+      setGrainPosition(Number(nextPos.toFixed(3)));
+    }
+
+    // 2. 聲音粒子速度由慢到快 / 由快到慢漸變 (Speed Morph: Slow->Fast, Fast->Slow, Breathing, Random)
+    if (state.auto.tempoMode !== 'manual') {
+      let progress = 0; // 0 = 最慢 (稀疏長粒子), 1 = 最快 (高密短粒子)
+      if (state.auto.tempoMode === 'accel') {
+        // 由慢到快漸變 (到達最快後維持或循環)
+        progress = Math.min(1, elapsedSec / cycleSec);
+      } else if (state.auto.tempoMode === 'decel') {
+        // 由快到慢漸變
+        progress = Math.max(0, 1 - elapsedSec / cycleSec);
+      } else if (state.auto.tempoMode === 'pendulum') {
+        // 慢 ⇄ 快呼吸循環
+        progress = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2);
+      } else if (state.auto.tempoMode === 'random_morph') {
+        // REplay PLAYer Random Granularity Fade
+        if (Math.abs(state.grain.density - state.auto.morphTargetDensity) < 2) {
+          state.auto.morphTargetDensity = 4 + Math.random() * 58;
+          state.auto.morphTargetSize = 22 + Math.random() * 340;
+        }
+        const newDensity = state.grain.density + (state.auto.morphTargetDensity - state.grain.density) * dt * (2.5 / cycleSec);
+        const newSize = state.grain.sizeMs + (state.auto.morphTargetSize - state.grain.sizeMs) * dt * (2.5 / cycleSec);
+        applyGrainDensityAndSize(newDensity, newSize);
+      }
+
+      if (state.auto.tempoMode !== 'random_morph') {
+        // 指數曲線映射：progress 0 (3 顆/秒, 360ms 長粒子) -> progress 1 (62 顆/秒, 22ms 極短微粒)
+        const curved = Math.pow(progress, 1.35);
+        const targetDensity = 3 + curved * 59;
+        const targetSize = 360 - curved * 338;
+        applyGrainDensityAndSize(targetDensity, targetSize);
+      }
+    }
+
+    // 3. 音高自動演化 (Pitch Morph: Glissando / Brownian / Rising)
+    if (state.auto.pitchMode !== 'manual') {
+      let nextPitch = state.grain.pitchSemitones;
+      if (state.auto.pitchMode === 'glissando') {
+        const phase = (elapsedSec / cycleSec) * Math.PI * 2;
+        nextPitch = Math.round(Math.sin(phase) * 12);
+      } else if (state.auto.pitchMode === 'brownian') {
+        if (Math.random() < dt * 4) {
+          const step = [-5, -3, -2, 2, 3, 5, 7][Math.floor(Math.random() * 7)];
+          nextPitch = Math.max(-19, Math.min(19, nextPitch + step));
+        }
+      } else if (state.auto.pitchMode === 'rising') {
+        const norm = (elapsedSec % cycleSec) / cycleSec;
+        nextPitch = Math.round(-12 + norm * 24);
+      }
+
+      if (nextPitch !== state.grain.pitchSemitones) {
+        state.grain.pitchSemitones = nextPitch;
+        const pitchEl = document.getElementById('grain-pitch');
+        const valEl = document.getElementById('val-grain-pitch');
+        if (pitchEl) pitchEl.value = nextPitch;
+        if (valEl) valEl.textContent = `${nextPitch >= 0 ? '+' : ''}${nextPitch} st`;
+      }
+    }
+  }
+
+  function applyGrainDensityAndSize(density, sizeMs) {
+    state.grain.density = Math.max(2, Math.min(65, density));
+    state.grain.sizeMs = Math.max(15, Math.min(450, sizeMs));
+
+    const denEl = document.getElementById('grain-density');
+    const denVal = document.getElementById('val-grain-density');
+    if (denEl) denEl.value = state.grain.density;
+    if (denVal) denVal.textContent = `${Math.round(state.grain.density)} /s`;
+
+    const sizeEl = document.getElementById('grain-size');
+    const sizeVal = document.getElementById('val-grain-size');
+    if (sizeEl) sizeEl.value = state.grain.sizeMs;
+    if (sizeVal) sizeVal.textContent = `${Math.round(state.grain.sizeMs)} ms`;
+  }
+
+  // 粒子排程器迴圈 (支援滑鼠、HOLD、視訊鏡頭體感動作與自動演化觸發)
   let lastGrainSpawnTime = 0;
   function updateGranularScheduler(timestamp) {
+    updateAutomationEngine(timestamp);
+
     const motionTriggered = state.webcamActive && state.camMotionEnergy > 0.04;
-    const shouldEmit = state.isRunning && (state.isHold || state.isPointerDown || motionTriggered);
+    const autoActive =
+      state.auto.scanMode !== 'manual' ||
+      state.auto.tempoMode !== 'manual' ||
+      state.auto.pitchMode !== 'manual';
+    const shouldEmit = state.isRunning && (state.isHold || state.isPointerDown || motionTriggered || autoActive);
     if (!shouldEmit) return;
 
     // 若由鏡頭體感觸發，動作越大發射密度越高
@@ -1327,6 +1477,59 @@
   });
   bindSlider('grain-pan', (v) => { state.grain.stereoPan = v; return `${Math.round(v * 100)}%`; });
 
+  // REplay PLAYer 風格自動演化與速度漸變控制項綁定
+  const scanModeSel = document.getElementById('auto-scan-mode');
+  const tempoModeSel = document.getElementById('auto-tempo-mode');
+  const pitchModeSel = document.getElementById('auto-pitch-mode');
+
+  scanModeSel.addEventListener('change', (e) => {
+    state.auto.scanMode = e.target.value;
+    state.auto.rampStartTime = performance.now();
+    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+  });
+
+  tempoModeSel.addEventListener('change', (e) => {
+    state.auto.tempoMode = e.target.value;
+    state.auto.rampStartTime = performance.now();
+    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+  });
+
+  pitchModeSel.addEventListener('change', (e) => {
+    state.auto.pitchMode = e.target.value;
+    state.auto.rampStartTime = performance.now();
+    if (e.target.value !== 'manual' && !state.isRunning) toggleEnginePower(true);
+  });
+
+  bindSlider('auto-cycle-sec', (v) => {
+    state.auto.cycleSec = v;
+    return `${v.toFixed(1)} s`;
+  });
+
+  document.getElementById('btn-trigger-accel').addEventListener('click', () => {
+    if (!state.isRunning) toggleEnginePower(true);
+    tempoModeSel.value = 'accel';
+    state.auto.tempoMode = 'accel';
+    state.auto.rampStartTime = performance.now();
+    applyGrainDensityAndSize(3, 360);
+  });
+
+  document.getElementById('btn-trigger-decel').addEventListener('click', () => {
+    if (!state.isRunning) toggleEnginePower(true);
+    tempoModeSel.value = 'decel';
+    state.auto.tempoMode = 'decel';
+    state.auto.rampStartTime = performance.now();
+    applyGrainDensityAndSize(62, 22);
+  });
+
+  document.getElementById('btn-stop-auto').addEventListener('click', () => {
+    scanModeSel.value = 'manual';
+    tempoModeSel.value = 'manual';
+    pitchModeSel.value = 'manual';
+    state.auto.scanMode = 'manual';
+    state.auto.tempoMode = 'manual';
+    state.auto.pitchMode = 'manual';
+  });
+
   // 效果器滑桿綁定
   bindSlider('fx-cutoff', (v) => {
     setFilterCutoff(v);
@@ -1506,6 +1709,85 @@
   });
 
   // ==========================================
+  // 純音訊無損 WAV 錄音功能 (16-bit Stereo PCM .wav)
+  // ==========================================
+  const recAudioBtn = document.getElementById('btn-record-audio');
+  const recAudioLabel = document.getElementById('record-audio-label');
+
+  function encodeStereoWAV(leftChunks, rightChunks, sampleRate) {
+    let totalSamples = 0;
+    for (const c of leftChunks) totalSamples += c.length;
+
+    const numChannels = 2;
+    const bytesPerSample = 2;
+    const dataByteLength = totalSamples * numChannels * bytesPerSample;
+    const buffer = new ArrayBuffer(44 + dataByteLength);
+    const view = new DataView(buffer);
+
+    const writeStr = (offset, str) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+
+    writeStr(0, 'RIFF');
+    view.setUint32(4, 36 + dataByteLength, true);
+    writeStr(8, 'WAVE');
+    writeStr(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
+    view.setUint16(32, numChannels * bytesPerSample, true);
+    view.setUint16(34, 16, true); // 16-bit
+    writeStr(36, 'data');
+    view.setUint32(40, dataByteLength, true);
+
+    let offset = 44;
+    for (let c = 0; c < leftChunks.length; c++) {
+      const L = leftChunks[c];
+      const R = rightChunks[c];
+      for (let i = 0; i < L.length; i++) {
+        const sL = Math.max(-1, Math.min(1, L[i]));
+        const sR = Math.max(-1, Math.min(1, R[i]));
+        view.setInt16(offset, sL < 0 ? sL * 0x8000 : sL * 0x7FFF, true);
+        view.setInt16(offset + 2, sR < 0 ? sR * 0x8000 : sR * 0x7FFF, true);
+        offset += 4;
+      }
+    }
+    return new Blob([buffer], { type: 'audio/wav' });
+  }
+
+  recAudioBtn.addEventListener('click', () => {
+    if (isRecordingWav) {
+      isRecordingWav = false;
+      recAudioBtn.classList.remove('recording');
+      recAudioLabel.textContent = '錄音 WAV';
+
+      if (wavLeftChunks.length > 0 && audioCtx) {
+        const wavBlob = encodeStereoWAV(wavLeftChunks, wavRightChunks, audioCtx.sampleRate);
+        const url = URL.createObjectURL(wavBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aether-granular-audio-${Date.now()}.wav`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }
+      wavLeftChunks = [];
+      wavRightChunks = [];
+      return;
+    }
+
+    initAudioEngine();
+    if (!state.isRunning) toggleEnginePower(true);
+
+    wavLeftChunks = [];
+    wavRightChunks = [];
+    isRecordingWav = true;
+    recAudioBtn.classList.add('recording');
+    recAudioLabel.textContent = '停止並下載 .WAV';
+  });
+
+  // ==========================================
   // 錄製畫面與音訊匯出功能 (優先輸出 MP4 H.264/AAC 影片)
   // ==========================================
   let mediaRecorder = null;
@@ -1535,7 +1817,7 @@
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
       recBtn.classList.remove('recording');
-      recLabel.textContent = '錄製 MP4';
+      recLabel.textContent = '錄影 MP4';
       return;
     }
 
