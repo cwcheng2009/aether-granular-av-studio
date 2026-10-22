@@ -68,9 +68,12 @@
       particleSize: 2.2
     },
 
-    // 執行期統計
+    // 執行期統計與視訊鏡頭體感偵測狀態
     activeGrainsCount: 0,
-    recentGrainTriggers: [] // 儲存最近觸發的聲粒供波形圖與視覺爆發顯示
+    recentGrainTriggers: [], // 儲存最近觸發的聲粒供波形圖與視覺爆發顯示
+    camMotionEnergy: 0,      // 0 ~ 1 鏡頭畫面動作能量
+    camMotionX: 0.5,         // 鏡頭動作重心 X (0 ~ 1)
+    camMotionY: 0.5          // 鏡頭動作重心 Y (0 ~ 1)
   };
 
   // 音階半音對照表
@@ -470,17 +473,22 @@
     burstVisualParticles(normalizedPos, panVal);
   }
 
-  // 粒子排程器迴圈
+  // 粒子排程器迴圈 (支援滑鼠、HOLD 與視訊鏡頭體感動作觸發)
   let lastGrainSpawnTime = 0;
   function updateGranularScheduler(timestamp) {
-    const shouldEmit = state.isRunning && (state.isHold || state.isPointerDown || state.autoPlayPreview);
+    const motionTriggered = state.webcamActive && state.camMotionEnergy > 0.04;
+    const shouldEmit = state.isRunning && (state.isHold || state.isPointerDown || motionTriggered);
     if (!shouldEmit) return;
 
-    const intervalMs = 1000 / Math.max(1, state.grain.density);
+    // 若由鏡頭體感觸發，動作越大發射密度越高
+    const motionBoost = motionTriggered ? (0.6 + state.camMotionEnergy * 1.8) : 1.0;
+    const effectiveDensity = Math.min(75, state.grain.density * motionBoost);
+    const intervalMs = 1000 / Math.max(1, effectiveDensity);
+
     if (timestamp - lastGrainSpawnTime >= intervalMs) {
       spawnAudioGrain();
       // 若高密度則單幀可補發第 2 顆粒子
-      if (timestamp - lastGrainSpawnTime >= intervalMs * 2 && state.grain.density > 35) {
+      if (timestamp - lastGrainSpawnTime >= intervalMs * 2 && effectiveDensity > 35) {
         spawnAudioGrain();
       }
       lastGrainSpawnTime = timestamp;
@@ -615,13 +623,73 @@
   const fxCanvas = document.getElementById('fx-canvas');
   const fxCtx = fxCanvas.getContext('2d');
 
-  // 視訊鏡頭離屏取樣畫布
+  // 視訊鏡頭離屏取樣畫布與體感動態偵測緩衝區
   const webcamVideo = document.getElementById('webcam-video');
   const camSampleCanvas = document.createElement('canvas');
   camSampleCanvas.width = 128;
   camSampleCanvas.height = 72;
   const camSampleCtx = camSampleCanvas.getContext('2d', { willReadFrequently: true });
   let camPixelData = null;
+  let prevCamLuma = new Float32Array(128 * 72);
+
+  // 分析鏡頭畫面幀差 (Optical Motion Detection) 並驅動聲音粒子合成參數
+  function analyzeWebcamMotion(pixelData) {
+    const cw = 128;
+    const ch = 72;
+    let diffSum = 0;
+    let weightedX = 0;
+    let weightedY = 0;
+    let activePixels = 0;
+
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        const idx = y * cw + x;
+        const pIdx = idx * 4;
+        const luma = (pixelData[pIdx] * 0.299 + pixelData[pIdx + 1] * 0.587 + pixelData[pIdx + 2] * 0.114) / 255;
+        const diff = Math.abs(luma - prevCamLuma[idx]);
+        prevCamLuma[idx] = luma;
+
+        // 過濾微弱相機雜訊
+        if (diff > 0.075) {
+          diffSum += diff;
+          weightedX += (x / cw) * diff;
+          weightedY += (y / ch) * diff;
+          activePixels++;
+        }
+      }
+    }
+
+    const rawEnergy = Math.min(1, diffSum / 65);
+    state.camMotionEnergy = state.camMotionEnergy * 0.72 + rawEnergy * 0.28;
+
+    const motionFillEl = document.getElementById('motion-meter-fill');
+    if (motionFillEl) {
+      motionFillEl.style.width = `${Math.min(100, Math.round(state.camMotionEnergy * 130))}%`;
+    }
+
+    // 當偵測到明顯肢體/手部移動時，自動更新互動座標、粒子掃描位置與濾波器頻率
+    if (diffSum > 1.2 && activePixels > 8 && !state.isPointerDown) {
+      const targetX = Math.max(0, Math.min(1, weightedX / diffSum));
+      const targetY = Math.max(0, Math.min(1, weightedY / diffSum));
+
+      // 平滑追蹤動作重心
+      state.camMotionX = state.camMotionX * 0.78 + targetX * 0.22;
+      state.camMotionY = state.camMotionY * 0.78 + targetY * 0.22;
+
+      state.pointerX = state.camMotionX;
+      state.pointerY = state.camMotionY;
+
+      // X 軸連動聲音粒子掃描位置 (Scan Position)
+      setGrainPosition(Number(state.camMotionX.toFixed(3)));
+
+      // Y 軸連動低通濾波器截止頻率與音高微調 (手舉高聲音更亮、音高上揚)
+      const mappedCutoff = Math.round(180 * Math.pow(75, 1 - state.camMotionY));
+      setFilterCutoff(Math.min(14000, Math.max(120, mappedCutoff)));
+
+      document.getElementById('hud-x').textContent = state.camMotionX.toFixed(2);
+      document.getElementById('hud-y').textContent = (1 - state.camMotionY).toFixed(2);
+    }
+  }
 
   // 視覺粒子陣列
   let particles = [];
@@ -779,15 +847,17 @@
     fxCtx.fillStyle = `rgba(6, 7, 12, ${fadeAlpha})`;
     fxCtx.fillRect(0, 0, w, h);
 
-    // 若開啟視訊鏡頭，擷取低解析度像素陣列供粒子吸附與發光
+    // 若開啟視訊鏡頭，擷取低解析度像素陣列供粒子吸附、發光與體感動作發聲偵測
     if (state.webcamActive && webcamVideo.readyState >= 2) {
       camSampleCtx.save();
       camSampleCtx.scale(-1, 1); // 鏡像翻轉
       camSampleCtx.drawImage(webcamVideo, -camSampleCanvas.width, 0, camSampleCanvas.width, camSampleCanvas.height);
       camSampleCtx.restore();
       camPixelData = camSampleCtx.getImageData(0, 0, camSampleCanvas.width, camSampleCanvas.height).data;
+      analyzeWebcamMotion(camPixelData);
     } else {
       camPixelData = null;
+      state.camMotionEnergy *= 0.85;
     }
 
     // 開啟加法混色發光效果
@@ -970,11 +1040,12 @@
   }
 
   function drawEmitterCursorRing(px, py, bass, high, mainColor) {
-    const active = state.isRunning && (state.isPointerDown || state.isHold);
-    const radius = (active ? 26 : 14) + bass * 42;
+    const motionActive = state.webcamActive && state.camMotionEnergy > 0.04;
+    const active = state.isRunning && (state.isPointerDown || state.isHold || motionActive);
+    const radius = (active ? 26 : 14) + bass * 42 + (motionActive ? state.camMotionEnergy * 35 : 0);
 
-    fxCtx.strokeStyle = `rgba(${mainColor[0]}, ${mainColor[1]}, ${mainColor[2]}, ${active ? 0.75 : 0.3})`;
-    fxCtx.lineWidth = active ? 2 : 1;
+    fxCtx.strokeStyle = `rgba(${mainColor[0]}, ${mainColor[1]}, ${mainColor[2]}, ${active ? 0.8 : 0.3})`;
+    fxCtx.lineWidth = active ? 2.2 : 1;
     fxCtx.beginPath();
     fxCtx.arc(px, py, radius, 0, Math.PI * 2);
     fxCtx.stroke();
@@ -1301,7 +1372,7 @@
     palSelect.dispatchEvent(new Event('change'));
   });
 
-  // 視訊鏡頭粒子化投影開關
+  // 視訊鏡頭粒子化投影與體感發聲開關
   const webcamBtn = document.getElementById('btn-webcam-toggle');
   const webcamBtnText = document.getElementById('webcam-btn-text');
   let webcamStream = null;
@@ -1309,12 +1380,15 @@
   webcamBtn.addEventListener('click', async () => {
     if (state.webcamActive) {
       state.webcamActive = false;
+      state.camMotionEnergy = 0;
+      const motionFillEl = document.getElementById('motion-meter-fill');
+      if (motionFillEl) motionFillEl.style.width = '0%';
       if (webcamStream) {
         webcamStream.getTracks().forEach((t) => t.stop());
         webcamStream = null;
       }
       webcamBtn.classList.remove('active');
-      webcamBtnText.textContent = '開啟視訊鏡頭粒子投影 (Webcam FX)';
+      webcamBtnText.textContent = '開啟視訊鏡頭體感發聲 (Webcam Motion)';
       return;
     }
 
@@ -1327,7 +1401,13 @@
       await webcamVideo.play();
       state.webcamActive = true;
       webcamBtn.classList.add('active');
-      webcamBtnText.textContent = '關閉視訊鏡頭粒子投影 (运行中)';
+      webcamBtnText.textContent = '關閉視訊鏡頭體感發聲 (體感互動中)';
+
+      // 開啟鏡頭時自動啟動聲音引擎，並關閉 HOLD 讓使用者可以直接體驗「有動才有聲音、不動就安靜」的體感演奏
+      if (!state.isRunning) {
+        await toggleEnginePower(true);
+      }
+      toggleHold(false);
     } catch (err) {
       console.warn('無法開啟視訊鏡頭:', err);
       alert('無法存取視訊鏡頭，請確認瀏覽器已允許相機權限。');

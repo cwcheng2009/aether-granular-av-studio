@@ -392,9 +392,13 @@
         <div class="webcam-box">
           <button class="cyber-btn" id="btn-webcam-toggle">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            <span id="webcam-btn-text">開啟視訊鏡頭粒子投影 (Webcam FX)</span>
+            <span id="webcam-btn-text">開啟視訊鏡頭體感發聲 (Webcam Motion)</span>
           </button>
-          <p class="helper-text">開啟後，視覺粒子會自動吸附在您的鏡頭輪廓與色彩上，並隨聲音粒子震動崩解！</p>
+          <div class="mic-meter-wrap" id="motion-meter-wrap" style="margin-top:6px;">
+            <span>體感動作能量</span>
+            <div class="mic-meter-bar"><div class="mic-meter-fill" id="motion-meter-fill"></div></div>
+          </div>
+          <p class="helper-text">開啟後免用滑鼠！對著鏡頭揮手或移動身體，動作位置會自動控制粒子掃描(X)與濾波音高(Y)並即時發射聲音粒子！</p>
           <video id="webcam-video" autoplay playsinline muted hidden></video>
         </div>
 
