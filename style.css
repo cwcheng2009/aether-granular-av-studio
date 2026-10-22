@@ -741,6 +741,145 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: #fff;
 }
 
+/* 頂部 AI 導覽按鈕與 MiniMax 導演工作台 Modal */
+.director-btn {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.28), rgba(0, 240, 255, 0.22));
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #fff;
+}
+
+.director-btn:hover {
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+.director-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(680px, 94vw);
+  max-height: 86vh;
+  border-radius: 18px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  gap: 14px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.82);
+}
+
+.director-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+.director-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.director-title-wrap h2 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--cyan);
+  letter-spacing: 0.8px;
+}
+
+.director-body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 4px;
+}
+
+.director-section {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cyber-input, .cyber-textarea {
+  width: 100%;
+  background: rgba(8, 11, 20, 0.92);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cyber-input:focus, .cyber-textarea:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.storyboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.story-step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.story-step.active-step {
+  border-color: var(--cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.step-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+.director-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  padding-top: 10px;
+}
+
+.director-status {
+  font-size: 12px;
+  color: var(--amber);
+  line-height: 1.4;
+}
+
+.director-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+
+.primary-director-btn {
+  background: linear-gradient(135deg, rgba(0, 255, 157, 0.25), rgba(0, 240, 255, 0.3));
+  border-color: var(--emerald);
+}
+
 /* 響應式行動裝置支援 */
 @media (max-width: 960px) {
   .brand-subtitle { display: none; }

@@ -1284,6 +1284,50 @@
 
     // 4. 繪製游標聲音粒子發射核心光環
     drawEmitterCursorRing(px, py, bass, high, palette[0]);
+
+    // 5. 若正在進行 AI 語音導覽展演，在畫布下方繪製電影感字幕橫幅 (確保直接錄進 MP4 影片中)
+    if (state.narrationSubtitle) {
+      drawNarrationSubtitleBanner(w, h, state.narrationSubtitle, state.narrationStepTitle);
+    }
+  }
+
+  function drawNarrationSubtitleBanner(w, h, subtitleText, stepTitle) {
+    fxCtx.save();
+    fxCtx.globalCompositeOperation = 'source-over';
+
+    const boxW = Math.min(w * 0.82, 860);
+    const boxH = 82;
+    const boxX = (w - boxW) * 0.5;
+    const boxY = h - boxH - 64;
+
+    // 半透明深色科技感字幕底框
+    fxCtx.fillStyle = 'rgba(6, 9, 18, 0.82)';
+    fxCtx.strokeStyle = 'rgba(0, 240, 255, 0.48)';
+    fxCtx.lineWidth = 1.5;
+    fxCtx.beginPath();
+    if (fxCtx.roundRect) {
+      fxCtx.roundRect(boxX, boxY, boxW, boxH, 12);
+    } else {
+      fxCtx.rect(boxX, boxY, boxW, boxH);
+    }
+    fxCtx.fill();
+    fxCtx.stroke();
+
+    // 繪製章節小標
+    if (stepTitle) {
+      fxCtx.font = '600 12px "JetBrains Mono", monospace';
+      fxCtx.fillStyle = '#00f0ff';
+      fxCtx.textAlign = 'center';
+      fxCtx.fillText(stepTitle, w * 0.5, boxY + 24);
+    }
+
+    // 繪製旁白字幕主文
+    fxCtx.font = '600 17px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
+    fxCtx.fillStyle = '#ffffff';
+    fxCtx.textAlign = 'center';
+    fxCtx.fillText(subtitleText, w * 0.5, boxY + 56, boxW - 36);
+
+    fxCtx.restore();
   }
 
   function drawCyberWaveGrid(w, h, t, palette, bass, mid) {
@@ -2090,7 +2134,7 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') {
       e.preventDefault();
       toggleEnginePower();
@@ -2098,6 +2142,294 @@
       workspaceEl.classList.toggle('ui-hidden');
     } else if (e.key === 'f' || e.key === 'F') {
       document.getElementById('btn-fullscreen').click();
+    }
+  });
+
+  // ==========================================
+  // MiniMax AI 語音導覽與自動說明影片剪輯工作台 (Director Studio)
+  // ==========================================
+  const directorModal = document.getElementById('director-modal');
+  const openDirectorBtn = document.getElementById('btn-open-director');
+  const closeDirectorBtn = document.getElementById('btn-close-director');
+  const directorStatusEl = document.getElementById('director-status');
+  const mmApiKeyInput = document.getElementById('mm-api-key');
+  const mmGroupIdInput = document.getElementById('mm-group-id');
+  const mmEndpointSel = document.getElementById('mm-endpoint');
+  const mmModelSel = document.getElementById('mm-model');
+  const mmVoiceSel = document.getElementById('mm-voice');
+
+  let mmConfig = {
+    bgmDuck: 0.32,
+    speed: 1.05,
+    isRunningShow: false
+  };
+
+  // 從 localStorage 載入已保存的 MiniMax 設定
+  try {
+    const savedKey = localStorage.getItem('aether_mm_api_key');
+    const savedGroup = localStorage.getItem('aether_mm_group_id');
+    const savedEndpoint = localStorage.getItem('aether_mm_endpoint');
+    if (savedKey) mmApiKeyInput.value = savedKey;
+    if (savedGroup) mmGroupIdInput.value = savedGroup;
+    if (savedEndpoint) mmEndpointSel.value = savedEndpoint;
+  } catch (_) {}
+
+  const saveMmCredentials = () => {
+    try {
+      localStorage.setItem('aether_mm_api_key', mmApiKeyInput.value.trim());
+      localStorage.setItem('aether_mm_group_id', mmGroupIdInput.value.trim());
+      localStorage.setItem('aether_mm_endpoint', mmEndpointSel.value);
+    } catch (_) {}
+  };
+
+  mmApiKeyInput.addEventListener('change', saveMmCredentials);
+  mmGroupIdInput.addEventListener('change', saveMmCredentials);
+  mmEndpointSel.addEventListener('change', saveMmCredentials);
+
+  bindSlider('mm-bgm-duck', (v) => {
+    mmConfig.bgmDuck = v;
+    return `${Math.round(v * 100)}%`;
+  });
+  bindSlider('mm-speed', (v) => {
+    mmConfig.speed = v;
+    return `${v.toFixed(2)}x`;
+  });
+
+  openDirectorBtn.addEventListener('click', () => {
+    directorModal.style.display = directorModal.style.display === 'none' ? 'flex' : 'none';
+  });
+  closeDirectorBtn.addEventListener('click', () => {
+    directorModal.style.display = 'none';
+  });
+
+  // 呼叫 MiniMax T2A v2 API 並解碼為 Web Audio AudioBuffer
+  async function synthesizeMiniMaxSpeech(text) {
+    initAudioEngine();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    const apiKey = mmApiKeyInput.value.trim();
+    const groupId = mmGroupIdInput.value.trim();
+    const baseUrl = mmEndpointSel.value;
+    const model = mmModelSel.value;
+    const voiceId = mmVoiceSel.value;
+
+    if (!apiKey) {
+      throw new Error('請先在上方欄位貼上您的 MiniMax API Key！');
+    }
+    saveMmCredentials();
+
+    const url = groupId ? `${baseUrl}?GroupId=${encodeURIComponent(groupId)}` : baseUrl;
+
+    const payload = {
+      model,
+      text,
+      stream: false,
+      voice_setting: {
+        voice_id: voiceId,
+        speed: mmConfig.speed,
+        vol: 1.0,
+        pitch: 0
+      },
+      audio_setting: {
+        sample_rate: 32000,
+        bitrate: 128000,
+        format: 'mp3',
+        channel: 1
+      }
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText.slice(0, 120)}`);
+    }
+
+    const json = await res.json();
+    if (json.base_resp && json.base_resp.status_code !== 0) {
+      throw new Error(`MiniMax 錯誤 (${json.base_resp.status_code}): ${json.base_resp.status_msg}`);
+    }
+
+    const hexAudio = json.data && json.data.audio;
+    if (!hexAudio) {
+      throw new Error('MiniMax 回傳資料中未包含音訊內容 (data.audio)');
+    }
+
+    // 將 Hex 字串轉為 Uint8Array 並解碼為 AudioBuffer
+    const byteLen = hexAudio.length / 2;
+    const bytes = new Uint8Array(byteLen);
+    for (let i = 0; i < byteLen; i++) {
+      bytes[i] = parseInt(hexAudio.substr(i * 2, 2), 16);
+    }
+
+    return await audioCtx.decodeAudioData(bytes.buffer);
+  }
+
+  // 播放解碼後的語音 Buffer（同時送入喇叭、視覺頻譜儀、WAV 錄音器與 MP4 錄影軌道）
+  function playNarrationBuffer(audioBuffer) {
+    return new Promise((resolve) => {
+      const src = audioCtx.createBufferSource();
+      src.buffer = audioBuffer;
+
+      const voiceGain = audioCtx.createGain();
+      voiceGain.gain.value = 1.15;
+
+      src.connect(voiceGain);
+      voiceGain.connect(analyserNode);
+      if (mediaStreamDest) voiceGain.connect(mediaStreamDest);
+      if (wavRecorderNode) voiceGain.connect(wavRecorderNode);
+
+      src.onended = () => resolve();
+      src.start();
+    });
+  }
+
+  // 試聽第 1 段語音按鈕
+  document.getElementById('btn-test-mm-voice').addEventListener('click', async () => {
+    const firstTextarea = document.querySelector('.step-script');
+    const text = firstTextarea ? firstTextarea.value.trim() : '歡迎來到 AETHER 粒子聲音合成實驗室。';
+    directorStatusEl.textContent = '⏳ 正在連線 MiniMax 合成試聽語音...';
+    directorStatusEl.style.color = '#ffb800';
+
+    try {
+      const buf = await synthesizeMiniMaxSpeech(text);
+      directorStatusEl.textContent = `✅ 語音合成成功 (${buf.duration.toFixed(1)} 秒)，正在播放試聽...`;
+      directorStatusEl.style.color = '#00ff9d';
+      state.narrationStepTitle = 'VOICE PREVIEW // 語音試聽';
+      state.narrationSubtitle = text;
+      await playNarrationBuffer(buf);
+      state.narrationSubtitle = '';
+      state.narrationStepTitle = '';
+    } catch (err) {
+      console.error('MiniMax 語音合成失敗:', err);
+      directorStatusEl.textContent = `❌ 合成失敗：${err.message}`;
+      directorStatusEl.style.color = '#ff2a85';
+    }
+  });
+
+  // 執行各分鏡段落對應的自動化功能與視覺特效切換
+  function triggerStoryboardAction(stepIdx) {
+    if (stepIdx === 0) {
+      // 段落 1：音檔粒子 + 星雲漫遊 + 平滑漫步
+      document.getElementById('btn-source-file').click();
+      document.querySelector('.pill-btn[data-scene="nebula"]').click();
+      setParamAutoState('position', true);
+      scanModeSel.value = 'walk';
+      state.auto.scanMode = 'walk';
+    } else if (stepIdx === 1) {
+      // 段落 2：相鄰步進漫步 (±1) + 粒子速度由慢到快漸變 + 引力漩渦
+      scanModeSel.value = 'neighbor_step';
+      state.auto.scanMode = 'neighbor_step';
+      setParamAutoState('position', true);
+      document.getElementById('btn-trigger-accel').click();
+      document.querySelector('.vmode-btn[data-vmode="vortex"]').click();
+    } else if (stepIdx === 2) {
+      // 段落 3：多波形振盪器粒子雲 + 水晶萬花筒 + 滑音演化
+      document.getElementById('btn-source-osc').click();
+      document.querySelector('.pill-btn[data-scene="crystal_rain"]').click();
+      setParamAutoState('pitch', true);
+      pitchModeSel.value = 'glissando';
+      state.auto.pitchMode = 'glissando';
+    } else if (stepIdx === 3) {
+      // 段落 4：電馭風暴 + 全自動演化展示
+      document.getElementById('btn-source-file').click();
+      document.querySelector('.pill-btn[data-scene="glitch_storm"]').click();
+      document.getElementById('btn-all-auto').click();
+    }
+  }
+
+  // 一鍵自動合成全部段落語音、展演功能並錄製下載 MP4 說明影片
+  document.getElementById('btn-start-auto-show').addEventListener('click', async () => {
+    if (mmConfig.isRunningShow) return;
+
+    const stepElements = Array.from(document.querySelectorAll('.story-step'));
+    const scripts = stepElements.map((el, idx) => ({
+      el,
+      title: el.querySelector('.step-badge').textContent,
+      text: el.querySelector('.step-script').value.trim()
+    })).filter((s) => s.text.length > 0);
+
+    if (!scripts.length) {
+      directorStatusEl.textContent = '❌ 請至少填寫一段旁白文字！';
+      return;
+    }
+
+    mmConfig.isRunningShow = true;
+    const startBtn = document.getElementById('btn-start-auto-show');
+    startBtn.disabled = true;
+
+    try {
+      // 1. 預先向 MiniMax 合成所有段落的語音，確保錄影過程零延遲無縫銜接
+      const audioBuffers = [];
+      for (let i = 0; i < scripts.length; i++) {
+        directorStatusEl.textContent = `⏳ [步驟 1/2] 正在透過 MiniMax 生成第 ${i + 1}/${scripts.length} 段語音旁白...`;
+        directorStatusEl.style.color = '#ffb800';
+        const buf = await synthesizeMiniMaxSpeech(scripts[i].text);
+        audioBuffers.push(buf);
+      }
+
+      directorStatusEl.textContent = '🎬 語音全部準備完成！即將關閉設定窗、開始自動展演並錄製 MP4...';
+      directorStatusEl.style.color = '#00ff9d';
+      await new Promise((r) => setTimeout(r, 900));
+
+      // 關閉工作台視窗以露出完整畫布與控制面板供錄影展示
+      directorModal.style.display = 'none';
+
+      // 啟動聲音引擎並將合成器背景音量適度調低 (Ducking) 凸顯旁白人聲
+      if (!state.isRunning) await toggleEnginePower(true);
+      toggleHold(true);
+      const originalMasterGain = state.fx.masterGain;
+      if (masterGainNode && audioCtx) {
+        masterGainNode.gain.setTargetAtTime(mmConfig.bgmDuck, audioCtx.currentTime, 0.15);
+      }
+
+      // 若尚未開始錄影，自動按下錄影 MP4 按鈕
+      const wasRecording = mediaRecorder && mediaRecorder.state === 'recording';
+      if (!wasRecording) {
+        recBtn.click();
+      }
+
+      // 2. 依序執行每個分鏡段落：切換場景與自動化參數 + 顯示畫布字幕 + 播報 MiniMax 語音
+      for (let i = 0; i < scripts.length; i++) {
+        stepElements.forEach((el, idx) => el.classList.toggle('active-step', idx === i));
+        triggerStoryboardAction(i);
+        state.narrationStepTitle = scripts[i].title;
+        state.narrationSubtitle = scripts[i].text;
+
+        await playNarrationBuffer(audioBuffers[i]);
+        // 段落之間留 0.9 秒讓觀眾欣賞聲音粒子與視覺變化
+        await new Promise((r) => setTimeout(r, 900));
+      }
+
+      // 結束展演：清除字幕、恢復主音量並自動停止錄影下載 MP4
+      state.narrationSubtitle = '';
+      state.narrationStepTitle = '';
+      if (masterGainNode && audioCtx) {
+        masterGainNode.gain.setTargetAtTime(originalMasterGain, audioCtx.currentTime, 0.25);
+      }
+
+      await new Promise((r) => setTimeout(r, 600));
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        recBtn.click(); // 觸發停止並自動下載 .mp4
+      }
+
+      directorStatusEl.textContent = '🎉 自動展演與 MP4 說明影片錄製完成！檔案已自動開始下載。';
+      directorStatusEl.style.color = '#00ff9d';
+    } catch (err) {
+      console.error('自動展演失敗:', err);
+      directorModal.style.display = 'flex';
+      directorStatusEl.textContent = `❌ 執行中斷：${err.message}`;
+      directorStatusEl.style.color = '#ff2a85';
+    } finally {
+      mmConfig.isRunningShow = false;
+      startBtn.disabled = false;
     }
   });
 
