@@ -1394,18 +1394,36 @@
   });
 
   // ==========================================
-  // 錄製畫面與音訊匯出功能 (WebM Video + Audio Recorder)
+  // 錄製畫面與音訊匯出功能 (優先輸出 MP4 H.264/AAC 影片)
   // ==========================================
   let mediaRecorder = null;
   let recordedChunks = [];
   const recBtn = document.getElementById('btn-record');
   const recLabel = document.getElementById('record-label');
 
+  function getPreferredRecordingConfig() {
+    const candidates = [
+      { mimeType: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
+      { mimeType: 'video/mp4;codecs=avc1,mp4a.40.2', ext: 'mp4' },
+      { mimeType: 'video/mp4;codecs=h264,aac', ext: 'mp4' },
+      { mimeType: 'video/mp4', ext: 'mp4' },
+      { mimeType: 'video/webm;codecs=h264,opus', ext: 'mp4' },
+      { mimeType: 'video/webm;codecs=vp9,opus', ext: 'webm' },
+      { mimeType: 'video/webm', ext: 'webm' }
+    ];
+    for (const item of candidates) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(item.mimeType)) {
+        return item;
+      }
+    }
+    return { mimeType: '', ext: 'mp4' };
+  }
+
   recBtn.addEventListener('click', () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
       recBtn.classList.remove('recording');
-      recLabel.textContent = '錄製影音';
+      recLabel.textContent = '錄製 MP4';
       return;
     }
 
@@ -1420,11 +1438,12 @@
       ];
       const combinedStream = new MediaStream(combinedTracks);
 
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-        ? 'video/webm;codecs=vp9,opus'
-        : 'video/webm';
+      const { mimeType, ext } = getPreferredRecordingConfig();
+      const options = mimeType
+        ? { mimeType, videoBitsPerSecond: 8000000 }
+        : { videoBitsPerSecond: 8000000 };
 
-      mediaRecorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 6000000 });
+      mediaRecorder = new MediaRecorder(combinedStream, options);
       recordedChunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -1432,18 +1451,19 @@
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const blobType = ext === 'mp4' ? 'video/mp4' : (mimeType || 'video/webm');
+        const blob = new Blob(recordedChunks, { type: blobType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `aether-granular-session-${Date.now()}.webm`;
+        a.download = `aether-granular-session-${Date.now()}.${ext}`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       };
 
       mediaRecorder.start();
       recBtn.classList.add('recording');
-      recLabel.textContent = '停止並下載';
+      recLabel.textContent = `停止並下載 .${ext.toUpperCase()}`;
     } catch (err) {
       console.error('錄影啟動失敗:', err);
       alert('您的瀏覽器不支援即時畫布錄影功能。');
