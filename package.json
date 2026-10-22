@@ -1,0 +1,17 @@
+{
+  "name": "aether-granular-av-studio",
+  "version": "1.0.0",
+  "description": "線上即時聲音粒子化合成 (Granular Synthesis) 與音訊反應粒子視覺特效網站",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "granular-synthesis",
+    "web-audio-api",
+    "audio-visualizer",
+    "particles",
+    "interactive-art"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AETHER // 粒子聲音合成與即時視覺特效實驗室</title>
+  <meta name="description" content="線上即時聲音粒子化合成（Granular Synthesis）與音訊驅動粒子流體視覺特效工作站。支援麥克風即時取樣、音檔載入與內建多波形振盪器。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 主 WebGL / 2D 混合粒子特效畫布 -->
+  <canvas id="fx-canvas"></canvas>
+
+  <!-- 頂部導覽與主控列 -->
+  <header class="topbar glass-panel">
+    <div class="brand">
+      <div class="brand-logo">
+        <span class="pulse-dot"></span>
+        <span class="brand-title">AETHER</span>
+      </div>
+      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v1.0</span></span>
+    </div>
+
+    <!-- 訊號源切換 -->
+    <div class="source-selector" role="tablist" aria-label="聲音訊號源">
+      <button class="source-btn active" data-source="file" id="btn-source-file" title="載入音訊檔案或內建取樣進行粒子切片合成">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span>音檔粒子 (Sampler)</span>
+      </button>
+      <button class="source-btn" data-source="mic" id="btn-source-mic" title="使用麥克風即時收音並寫入粒子緩衝區">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        <span>麥克風即時粒子 (Live Mic)</span>
+      </button>
+      <button class="source-btn" data-source="osc" id="btn-source-osc" title="使用多波形合成振盪器產生音訊粒子群">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>振盪器粒子雲 (Synth Cloud)</span>
+      </button>
+    </div>
+
+    <!-- 右側狀態與錄製工具 -->
+    <div class="toolbar-actions">
+      <button class="action-btn primary-glow" id="btn-power" title="啟動 / 暫停聲音引擎 (空白鍵)">
+        <svg id="icon-play" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="icon-stop" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        <span id="power-label">啟動引擎</span>
+      </button>
+
+      <button class="action-btn" id="btn-hold" title="鎖定持續發聲 (Hold)">
+        <span>HOLD</span>
+      </button>
+
+      <button class="action-btn record-btn" id="btn-record" title="錄製畫面與聲音輸出為 WebM 影片">
+        <span class="rec-dot"></span>
+        <span id="record-label">錄製影音</span>
+      </button>
+
+      <button class="action-btn icon-only" id="btn-toggle-ui" title="隱藏 / 顯示控制面板 (H)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+
+      <button class="action-btn icon-only" id="btn-fullscreen" title="全螢幕模式 (F)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 中央畫布互動提示浮層 -->
+  <div class="xy-hud" id="xy-hud">
+    <div class="hud-Readout">
+      <span>X (位置/頻率): <strong id="hud-x">0.50</strong></span>
+      <span>Y (音高/濾波): <strong id="hud-y">0.50</strong></span>
+      <span>活躍聲粒: <strong id="hud-grains">0</strong></span>
+      <span>FPS: <strong id="hud-fps">60</strong></span>
+    </div>
+    <div class="hud-hint" id="hud-hint">
+      在畫面上按住拖曳滑鼠（或觸控）即可即時發射聲音粒子並擾動視覺力場
+    </div>
+  </div>
+
+  <!-- 主工作區面板群 -->
+  <main class="workspace" id="workspace-panels">
+    <!-- 左側面板：音源與粒子合成引擎 -->
+    <section class="side-panel left-panel glass-panel">
+      <!-- 1. 訊號源專屬設定區 -->
+      <div class="panel-section" id="section-source-config">
+        <div class="section-header">
+          <h2>01 // 音源與波形緩衝區</h2>
+          <span class="status-tag" id="source-status-tag">READY</span>
+        </div>
+
+        <!-- 音檔載入與預設音色面板 -->
+        <div class="source-pane active" id="pane-file">
+          <div class="preset-row">
+            <label for="sample-preset">內建程序化取樣：</label>
+            <select id="sample-preset" class="cyber-select">
+              <option value="cosmic_pad">星際合唱氛圍 (Cosmic Pad)</option>
+              <option value="crystal_arp">水晶琶音泛音 (Crystal Pluck)</option>
+              <option value="vocal_formant">電子人聲共振 (Cyber Choir)</option>
+              <option value="sub_perc">深海低頻脈衝 (Sub Percussion)</option>
+            </select>
+          </div>
+          <div class="file-drop-zone" id="file-drop-zone">
+            <input type="file" id="audio-file-input" accept="audio/*" hidden />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="file-drop-label">點擊上傳或拖放 MP3 / WAV / OGG 音檔</span>
+          </div>
+        </div>
+
+        <!-- 麥克風即時收音面板 -->
+        <div class="source-pane" id="pane-mic">
+          <div class="mic-controls">
+            <button class="cyber-btn" id="btn-mic-freeze">
+              <span class="freeze-indicator"></span>
+              <span id="mic-freeze-text">凍結目前麥克風緩衝區 (Freeze)</span>
+            </button>
+            <div class="mic-meter-wrap">
+              <span>輸入電平</span>
+              <div class="mic-meter-bar"><div class="mic-meter-fill" id="mic-meter-fill"></div></div>
+            </div>
+            <p class="helper-text">對著麥克風說話、唱歌或彈奏樂器，聲音會即時錄入 4 秒循環緩衝區並轉化為粒子雲與視覺特效。</p>
+          </div>
+        </div>
+
+        <!-- 振盪器粒子設定面板 -->
+        <div class="source-pane" id="pane-osc">
+          <div class="control-grid">
+            <div class="control-item">
+              <label>波形 (Waveform)</label>
+              <select id="osc-waveform" class="cyber-select">
+                <option value="sawtooth">鋸齒波 (Sawtooth)</option>
+                <option value="sine">正弦波 (Sine)</option>
+                <option value="triangle">三角波 (Triangle)</option>
+                <option value="square">方波 (Square)</option>
+              </select>
+            </div>
+            <div class="control-item">
+              <label>音階量化 (Scale)</label>
+              <select id="osc-scale" class="cyber-select">
+                <option value="pentatonic">小調五聲音階 (Pentatonic)</option>
+                <option value="major7">夢幻大七和弦 (Dream Maj7)</option>
+                <option value="chromatic">半音階無限制 (Chromatic)</option>
+                <option value="fifths">空靈五度泛音 (Open Fifths)</option>
+              </select>
+            </div>
+            <div class="control-item full-width">
+              <div class="label-row">
+                <label for="osc-base-freq">基礎頻率 (Base Freq)</label>
+                <span class="val-readout" id="val-osc-base-freq">130.8 Hz (C3)</span>
+              </div>
+              <input type="range" id="osc-base-freq" min="55" max="523.25" step="0.5" value="130.81" />
+            </div>
+            <div class="control-item full-width">
+              <div class="label-row">
+                <label for="osc-fm-depth">FM 調變深度 (Metallic FM)</label>
+                <span class="val-readout" id="val-osc-fm-depth">18%</span>
+              </div>
+              <input type="range" id="osc-fm-depth" min="0" max="100" step="1" value="18" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 互動式波形與粒子切點顯示器 -->
+        <div class="waveform-container">
+          <canvas id="waveform-canvas" width="420" height="96"></canvas>
+          <div class="waveform-caption">
+            <span>拖曳上方波形可直接移動粒子掃描位置 (Scan Position)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 聲音粒子化引擎參數 (Granular Engine) -->
+      <div class="panel-section">
+        <div class="section-header">
+          <h2>02 // 聲音粒子化合成 (GRANULAR)</h2>
+          <button class="mini-btn" id="btn-random-grain" title="隨機化粒子合成參數">隨機靈感</button>
+        </div>
+
+        <div class="control-grid">
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-position">掃描位置 (Position)</label>
+              <span class="val-readout" id="val-grain-position">35%</span>
+            </div>
+            <input type="range" id="grain-position" min="0" max="1" step="0.005" value="0.35" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-spread">位置擴散 (Spray)</label>
+              <span class="val-readout" id="val-grain-spread">15%</span>
+            </div>
+            <input type="range" id="grain-spread" min="0" max="0.8" step="0.01" value="0.15" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-size">粒子長度 (Grain Size)</label>
+              <span class="val-readout" id="val-grain-size">120 ms</span>
+            </div>
+            <input type="range" id="grain-size" min="15" max="450" step="1" value="120" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-density">發射密度 (Density)</label>
+              <span class="val-readout" id="val-grain-density">22 /s</span>
+            </div>
+            <input type="range" id="grain-density" min="2" max="65" step="1" value="22" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-pitch">音高偏移 (Pitch)</label>
+              <span class="val-readout" id="val-grain-pitch">+0 st</span>
+            </div>
+            <input type="range" id="grain-pitch" min="-24" max="24" step="1" value="0" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-detune">粒子隨機微調 (Shimmer)</label>
+              <span class="val-readout" id="val-grain-detune">12%</span>
+            </div>
+            <input type="range" id="grain-detune" min="0" max="100" step="1" value="12" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-attack">包絡線形狀 (Envelope)</label>
+              <span class="val-readout" id="val-grain-attack">50%</span>
+            </div>
+            <input type="range" id="grain-attack" min="0.1" max="0.9" step="0.05" value="0.5" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="grain-pan">立體聲寬度 (Stereo Pan)</label>
+              <span class="val-readout" id="val-grain-pan">75%</span>
+            </div>
+            <input type="range" id="grain-pan" min="0" max="1" step="0.05" value="0.75" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 濾波與空間效果器 -->
+      <div class="panel-section">
+        <div class="section-header">
+          <h2>03 // 濾波器與空間效果 (FX)</h2>
+        </div>
+
+        <div class="control-grid">
+          <div class="control-item">
+            <div class="label-row">
+              <label for="fx-cutoff">低通濾波 (Filter Cutoff)</label>
+              <span class="val-readout" id="val-fx-cutoff">4200 Hz</span>
+            </div>
+            <input type="range" id="fx-cutoff" min="120" max="14000" step="10" value="4200" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="fx-resonance">濾波共振 (Resonance)</label>
+              <span class="val-readout" id="val-fx-resonance">2.5</span>
+            </div>
+            <input type="range" id="fx-resonance" min="0.5" max="15" step="0.1" value="2.5" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="fx-delay">立體聲延遲 (Delay Mix)</label>
+              <span class="val-readout" id="val-fx-delay">35%</span>
+            </div>
+            <input type="range" id="fx-delay" min="0" max="0.85" step="0.01" value="0.35" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="fx-reverb">太空殘響 (Space Reverb)</label>
+              <span class="val-readout" id="val-fx-reverb">45%</span>
+            </div>
+            <input type="range" id="fx-reverb" min="0" max="0.95" step="0.01" value="0.45" />
+          </div>
+
+          <div class="control-item full-width">
+            <div class="label-row">
+              <label for="master-volume">主輸出音量 (Master Gain)</label>
+              <span class="val-readout" id="val-master-volume">80%</span>
+            </div>
+            <input type="range" id="master-volume" min="0" max="1" step="0.01" value="0.8" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側面板：即時粒子影像特效與視訊鏡頭融合 -->
+    <section class="side-panel right-panel glass-panel">
+      <div class="panel-section">
+        <div class="section-header">
+          <h2>04 // 即時視覺特效模式 (VISUAL FX)</h2>
+          <button class="mini-btn" id="btn-random-visual" title="隨機化視覺特效參數">隨機視覺</button>
+        </div>
+
+        <div class="visual-mode-grid" role="radiogroup" aria-label="視覺模式">
+          <button class="vmode-btn active" data-vmode="swarm">
+            <span class="vmode-icon">✦</span>
+            <span>流體粒子星雲</span>
+          </button>
+          <button class="vmode-btn" data-vmode="vortex">
+            <span class="vmode-icon">◎</span>
+            <span>頻譜引力漩渦</span>
+          </button>
+          <button class="vmode-btn" data-vmode="cybergrid">
+            <span class="vmode-icon">❖</span>
+            <span>賽博波浪矩陣</span>
+          </button>
+          <button class="vmode-btn" data-vmode="kaleidoscope">
+            <span class="vmode-icon">✵</span>
+            <span>幾何聲波萬花筒</span>
+          </button>
+        </div>
+
+        <div class="control-grid">
+          <div class="control-item">
+            <label>色彩主題 (Palette)</label>
+            <select id="vis-palette" class="cyber-select">
+              <option value="cyberpunk">霓虹電馭 (Cyber Neon)</option>
+              <option value="aurora">極光翡翠 (Aurora Borealis)</option>
+              <option value="solar">日冕烈焰 (Solar Flare)</option>
+              <option value="monochrome">量子純白 (Quantum Mono)</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="vis-count">視覺粒子數 (Particles)</label>
+              <span class="val-readout" id="val-vis-count">2400</span>
+            </div>
+            <input type="range" id="vis-count" min="400" max="5000" step="100" value="2400" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="vis-reactivity">音訊反應強度 (Audio React)</label>
+              <span class="val-readout" id="val-vis-reactivity">140%</span>
+            </div>
+            <input type="range" id="vis-reactivity" min="0.2" max="3.0" step="0.05" value="1.4" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="vis-turbulence">流體亂流力場 (Turbulence)</label>
+              <span class="val-readout" id="val-vis-turbulence">65%</span>
+            </div>
+            <input type="range" id="vis-turbulence" min="0" max="2.0" step="0.05" value="0.65" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="vis-trails">殘影拖尾 (Motion Trails)</label>
+              <span class="val-readout" id="val-vis-trails">86%</span>
+            </div>
+            <input type="range" id="vis-trails" min="0.1" max="0.96" step="0.02" value="0.86" />
+          </div>
+
+          <div class="control-item">
+            <div class="label-row">
+              <label for="vis-glitch">重低音色差故障 (RGB Glitch)</label>
+              <span class="val-readout" id="val-vis-glitch">35%</span>
+            </div>
+            <input type="range" id="vis-glitch" min="0" max="1" step="0.05" value="0.35" />
+          </div>
+
+          <div class="control-item full-width">
+            <div class="label-row">
+              <label for="vis-size">粒子發光半徑 (Particle Glow)</label>
+              <span class="val-readout" id="val-vis-size">2.2 px</span>
+            </div>
+            <input type="range" id="vis-size" min="0.8" max="6.0" step="0.2" value="2.2" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 視訊鏡頭粒子化與光譜監測 -->
+      <div class="panel-section">
+        <div class="section-header">
+          <h2>05 // 鏡頭影像粒子化 & 頻譜儀</h2>
+        </div>
+
+        <div class="webcam-box">
+          <button class="cyber-btn" id="btn-webcam-toggle">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <span id="webcam-btn-text">開啟視訊鏡頭粒子投影 (Webcam FX)</span>
+          </button>
+          <p class="helper-text">開啟後，視覺粒子會自動吸附在您的鏡頭輪廓與色彩上，並隨聲音粒子震動崩解！</p>
+          <video id="webcam-video" autoplay playsinline muted hidden></video>
+        </div>
+
+        <!-- 即時 FFT 頻譜與示波器 -->
+        <div class="scope-box">
+          <div class="scope-header">
+            <span>REALTIME SPECTRUM & OSCILLOSCOPE</span>
+            <span id="peak-db">-∞ dB</span>
+          </div>
+          <canvas id="spectrum-canvas" width="360" height="84"></canvas>
+        </div>
+
+        <!-- 快捷預設組 (Scene Presets) -->
+        <div class="scene-presets">
+          <span class="preset-label">一鍵演出場景：</span>
+          <div class="preset-pills">
+            <button class="pill-btn active" data-scene="nebula">星雲漫遊</button>
+            <button class="pill-btn" data-scene="glitch_storm">電馭風暴</button>
+            <button class="pill-btn" data-scene="crystal_rain">水晶粒子雨</button>
+            <button class="pill-btn" data-scene="deep_drone">深海共振</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
