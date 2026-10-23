@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2.5" />
+  <link rel="stylesheet" href="style.css?v=2.6" />
 </head>
 <body>
   <!-- 主 WebGL / 2D 混合粒子特效畫布 -->
@@ -21,7 +21,7 @@
         <span class="pulse-dot"></span>
         <span class="brand-title">Ilab</span>
       </div>
-      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v2.5</span></span>
+      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v2.6</span></span>
     </div>
 
     <!-- 訊號源切換 -->
@@ -60,11 +60,6 @@
       <button class="action-btn record-btn" id="btn-record" title="錄製畫面與聲音輸出為 MP4 影片">
         <span class="rec-dot"></span>
         <span id="record-label">錄影 MP4</span>
-      </button>
-
-      <button class="action-btn director-btn" id="btn-open-director" title="開啟 MiniMax AI 語音導覽與自動說明影片剪輯工作台">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-        <span>AI 導覽影片製作</span>
       </button>
 
       <button class="action-btn icon-only" id="btn-toggle-ui" title="隱藏 / 顯示控制面板 (H)">
@@ -540,112 +535,6 @@
     </section>
   </main>
 
-  <!-- MiniMax AI 語音導覽與自動說明影片剪輯工作台 Modal -->
-  <div class="director-modal glass-panel" id="director-modal" style="display:none;">
-    <div class="director-header">
-      <div class="director-title-wrap">
-        <span class="pulse-dot"></span>
-        <h2>MINIMAX AI STUDIO // 語音導覽與自動影片剪輯工作台</h2>
-      </div>
-      <button class="mini-btn" id="btn-close-director" title="關閉視窗">✕ 關閉</button>
-    </div>
-
-    <div class="director-body">
-      <!-- 1. MiniMax API 金鑰與聲線設定 -->
-      <div class="director-section">
-        <div class="subbox-title">01 // MINIMAX 語音 API 設定 (自動儲存於本機瀏覽器)</div>
-        <div class="control-grid">
-          <div class="control-item full-width">
-            <label for="mm-api-key">MiniMax API Key (Bearer Token)</label>
-            <input type="password" id="mm-api-key" class="cyber-input" placeholder="請貼上您的 MiniMax API Key (eyJ...)" autocomplete="off" />
-          </div>
-
-          <div class="control-item">
-            <label for="mm-group-id">Group ID (選填，T2A v2 可留空)</label>
-            <input type="text" id="mm-group-id" class="cyber-input" placeholder="例如：18293049..." autocomplete="off" />
-          </div>
-
-          <div class="control-item">
-            <label for="mm-endpoint">API 節點區域 (Endpoint)</label>
-            <select id="mm-endpoint" class="cyber-select">
-              <option value="https://api.minimax.io/v1/t2a_v2">國際版 (api.minimax.io)</option>
-              <option value="https://api.minimaxi.com/v1/t2a_v2">亞太/大陸版 (api.minimaxi.com)</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <label for="mm-model">語音模型 (Speech Model)</label>
-            <select id="mm-model" class="cyber-select">
-              <option value="speech-02-hd">speech-02-hd (高畫質旗艦)</option>
-              <option value="speech-02-turbo">speech-02-turbo (極速低延遲)</option>
-              <option value="speech-01-turbo">speech-01-turbo (經典穩定)</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <label for="mm-voice">播報聲線 (Voice ID)</label>
-            <select id="mm-voice" class="cyber-select">
-              <option value="male-qn-qingse">溫潤青年男聲 (male-qn-qingse)</option>
-              <option value="female-shaonv">清亮自然女聲 (female-shaonv)</option>
-              <option value="female-yujie">知性專業女聲 (female-yujie)</option>
-              <option value="male-qn-jingying">沉穩專業男聲 (male-qn-jingying)</option>
-              <option value="presenter_male">科技主播男聲 (presenter_male)</option>
-              <option value="presenter_female">科技主播女聲 (presenter_female)</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <div class="label-row">
-              <label for="mm-bgm-duck">介紹時合成器背景音量 (BGM Mix)</label>
-              <span class="val-readout" id="val-mm-bgm-duck">32%</span>
-            </div>
-            <input type="range" id="mm-bgm-duck" min="0.05" max="0.85" step="0.05" value="0.32" />
-          </div>
-
-          <div class="control-item">
-            <div class="label-row">
-              <label for="mm-speed">語速 (Voice Speed)</label>
-              <span class="val-readout" id="val-mm-speed">1.05x</span>
-            </div>
-            <input type="range" id="mm-speed" min="0.8" max="1.35" step="0.05" value="1.05" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. 分鏡腳本與自動展演設定 -->
-      <div class="director-section">
-        <div class="subbox-title">02 // 分鏡腳本與自動功能展演 (可自由修改各段旁白文字)</div>
-        <div class="storyboard-list" id="storyboard-list">
-          <div class="story-step" data-step="0">
-            <div class="step-badge">段落 1 // 開場與星雲漫遊</div>
-            <textarea class="cyber-textarea step-script" rows="2">歡迎來到 Ilab，這是一座運行於瀏覽器上的聲音粒子合成、與即時視覺特效實驗室。</textarea>
-          </div>
-          <div class="story-step" data-step="1">
-            <div class="step-badge">段落 2 // 相鄰步進與慢到快漸變</div>
-            <textarea class="cyber-textarea step-script" rows="2">透過獨特的相鄰步進漫步與自動化引擎，聲音顆粒能由慢到快平滑加速，創造出不斷演化的環境音牆。</textarea>
-          </div>
-          <div class="story-step" data-step="2">
-            <div class="step-badge">段落 3 // 多波形振盪器與水晶萬花筒</div>
-            <textarea class="cyber-textarea step-script" rows="2">切換至振盪器粒子雲模式，每一顆聲音粒子都會對齊五聲音階與大七和弦，並同步驅動幾何聲波萬花筒。</textarea>
-          </div>
-          <div class="story-step" data-step="3">
-            <div class="step-badge">段落 4 // 電馭風暴與無損錄製匯出</div>
-            <textarea class="cyber-textarea step-script" rows="2">您還可以開啟視訊鏡頭進行隔空體感演奏，並隨時一鍵錄製無損 WAV 音檔或高畫質 MP4 影片，立即分享您的創作。</textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. 進度狀態與執行按鈕 -->
-      <div class="director-footer">
-        <div class="director-status" id="director-status">請輸入 MiniMax API Key，接著點擊右側按鈕即可自動合成語音、展演功能並剪輯下載 MP4！</div>
-        <div class="director-actions">
-          <button type="button" class="cyber-btn" id="btn-test-mm-voice">🔊 試聽第 1 段語音</button>
-          <button type="button" class="cyber-btn primary-director-btn" id="btn-start-auto-show">🎬 開始自動展演並錄製 MP4 說明影片</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js?v=2.5"></script>
+  <script src="app.js?v=2.6"></script>
 </body>
 </html>
