@@ -2119,11 +2119,22 @@
     }
   });
 
-  // 隱藏 / 顯示 UI 與全螢幕快捷鍵
+  // 隱藏 / 顯示 UI 與全螢幕快捷鍵 (支援手機版右下角懸浮按鈕)
   const workspaceEl = document.getElementById('workspace-panels');
-  document.getElementById('btn-toggle-ui').addEventListener('click', () => {
-    workspaceEl.classList.toggle('ui-hidden');
-  });
+  const mobileUiFab = document.getElementById('btn-mobile-ui-fab');
+  const mobileUiFabLabel = document.getElementById('mobile-ui-fab-label');
+
+  function toggleWorkspacePanels() {
+    const isHidden = workspaceEl.classList.toggle('ui-hidden');
+    if (mobileUiFabLabel) {
+      mobileUiFabLabel.textContent = isHidden ? '展開參數面板' : '收合參數面板';
+    }
+  }
+
+  document.getElementById('btn-toggle-ui').addEventListener('click', toggleWorkspacePanels);
+  if (mobileUiFab) {
+    mobileUiFab.addEventListener('click', toggleWorkspacePanels);
+  }
 
   document.getElementById('btn-fullscreen').addEventListener('click', () => {
     if (!document.fullscreenElement) {
@@ -2139,7 +2150,7 @@
       e.preventDefault();
       toggleEnginePower();
     } else if (e.key === 'h' || e.key === 'H') {
-      workspaceEl.classList.toggle('ui-hidden');
+      toggleWorkspacePanels();
     } else if (e.key === 'f' || e.key === 'F') {
       document.getElementById('btn-fullscreen').click();
     }

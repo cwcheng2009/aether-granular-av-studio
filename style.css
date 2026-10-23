@@ -880,20 +880,84 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-color: var(--emerald);
 }
 
+/* 底部懸浮展開/收合參數面板按鈕 (FAB) */
+.mobile-ui-fab {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 35;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 240, 255, 0.55);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.65), 0 0 15px rgba(0, 240, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.mobile-ui-fab:hover, .mobile-ui-fab:active {
+  background: rgba(0, 240, 255, 0.22);
+  transform: scale(1.04);
+}
+
 /* 響應式行動裝置支援 */
 @media (max-width: 960px) {
   .brand-subtitle { display: none; }
+  .topbar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .source-selector {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .source-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 6px;
+    font-size: 11px;
+  }
+  .toolbar-actions {
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .action-btn {
+    padding: 6px 9px;
+    font-size: 11px;
+  }
   .workspace {
+    top: 104px;
+    bottom: 64px;
+    left: 8px;
+    right: 8px;
     flex-direction: column;
     overflow-y: auto;
     pointer-events: auto;
-    gap: 12px;
+    gap: 10px;
   }
   .side-panel {
     width: 100%;
-    max-height: 42vh;
+    max-height: none;
+    overflow-y: visible;
   }
   .xy-hud {
     display: none;
+  }
+  .mobile-ui-fab {
+    display: flex;
   }
 }
