@@ -92,13 +92,15 @@
       morphTargetDetune: 20,
       morphTargetAttack: 0.5,
       morphTargetPan: 0.75,
+      morphStepIndex: 0,
+      morphHoldUntilMs: 0,
       // 使用者可自訂的自動演化範圍與平滑時間常數
       range: {
-        densityMin: 2,
-        densityMax: 120,
-        sizeMin: 12,
-        sizeMax: 900,
-        glideSec: 2.5
+        densityMin: 0.5,
+        densityMax: 200,
+        sizeMin: 5,
+        sizeMax: 1500,
+        glideSec: 2.0
       },
       // 各項參數獨立的「自動 / 手動」開關
       params: {
@@ -583,19 +585,55 @@
 
   // 於對數空間內插 (速度與長度跨越數個數量級，對數內插聽感最自然)
   function logLerp(a, b, t) {
-    return a * Math.pow(b / a, t);
+    const clampedT = Math.max(0, Math.min(1, t));
+    return a * Math.pow(b / a, clampedT);
   }
 
   // 平滑 S 曲線 (0 → 1)
   function easeInOut(x) {
-    return 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, x)));
+    const c = Math.max(0, Math.min(1, x));
+    return 0.5 - 0.5 * Math.cos(Math.PI * c);
   }
 
-  // 單向漸變週期：前 80% 平滑上升至 1，後 20% 以餘弦曲線平滑回落至 0，避免週期交界處「瞬間由快跳回慢」
-  function smoothRampCycle(phase) {
-    const rise = 0.8;
-    if (phase < rise) return easeInOut(phase / rise);
-    return 1 - easeInOut((phase - rise) / (1 - rise));
+  // 1. 由慢到快 (Accel)：
+  // 0.00 ~ 0.12：滯空於極小值 0.0 (使用者可清晰聆聽極稀疏微粒滴答聲)
+  // 0.12 ~ 0.72：平滑 S 曲線加速攀升至 1.0 (過渡無任何跳步)
+  // 0.72 ~ 0.88：滯空於極大值 1.0 (使用者可清晰聆聽極快速密集聲雲)
+  // 0.88 ~ 1.00：平滑 S 曲線回落至 0.0 (無縫銜接下一循環)
+  function cycleShapeAccel(phase) {
+    const p = ((phase % 1) + 1) % 1;
+    if (p < 0.12) return 0.0;
+    if (p < 0.72) return easeInOut((p - 0.12) / 0.60);
+    if (p < 0.88) return 1.0;
+    return 1 - easeInOut((p - 0.88) / 0.12);
+  }
+
+  // 2. 由快到慢 (Decel)：
+  // 0.00 ~ 0.12：滯空於極大值 1.0 (起始於密集聲雲)
+  // 0.12 ~ 0.72：平滑 S 曲線減速下沉至 0.0
+  // 0.72 ~ 0.88：滯空於極小值 0.0 (完全到達極致慢速點滴)
+  // 0.88 ~ 1.00：平滑 S 曲線回升至 1.0
+  function cycleShapeDecel(phase) {
+    const p = ((phase % 1) + 1) % 1;
+    if (p < 0.12) return 1.0;
+    if (p < 0.72) return 1 - easeInOut((p - 0.12) / 0.60);
+    if (p < 0.88) return 0.0;
+    return easeInOut((p - 0.88) / 0.12);
+  }
+
+  // 3. 呼吸來回循環 (Pendulum / Breathing Wave)：
+  // 0.00 ~ 0.12：吐氣深底，滯空於極小值 0.0
+  // 0.12 ~ 0.48：平滑吸氣攀升至 1.0
+  // 0.48 ~ 0.60：吸氣飽和，滯空於極大值 1.0
+  // 0.60 ~ 0.96：平滑吐氣下沉至 0.0
+  // 0.96 ~ 1.00：滯空於極小值 0.0
+  function cycleShapePendulum(phase) {
+    const p = ((phase % 1) + 1) % 1;
+    if (p < 0.12) return 0.0;
+    if (p < 0.48) return easeInOut((p - 0.12) / 0.36);
+    if (p < 0.60) return 1.0;
+    if (p < 0.96) return 1 - easeInOut((p - 0.60) / 0.36);
+    return 0.0;
   }
 
   // ------------------------------------------
@@ -622,14 +660,25 @@
     if (glideValues[key] === undefined || !Number.isFinite(glideValues[key])) {
       glideValues[key] = readGrainParam(key);
     }
-    const tau = Math.max(0.05, state.auto.range.glideSec * tauScale);
+    const tau = Math.max(0.04, state.auto.range.glideSec * tauScale);
     const alpha = 1 - Math.exp(-dt / tau);
     const cur = glideValues[key];
     let next;
     if (logDomain && cur > 0 && target > 0) {
-      next = Math.exp(Math.log(cur) + (Math.log(target) - Math.log(cur)) * alpha);
+      const logCur = Math.log(cur);
+      const logTgt = Math.log(target);
+      // 若距目標在 5% 以內或絕對差極小，直接精準貼合目標，徹底消除漸近線使數值始終無法精確碰觸極端的問題
+      if (Math.abs(logTgt - logCur) < 0.05 || Math.abs(target - cur) < 0.05) {
+        next = target;
+      } else {
+        next = Math.exp(logCur + (logTgt - logCur) * alpha);
+      }
     } else {
-      next = cur + (target - cur) * alpha;
+      if (Math.abs(target - cur) < 0.005) {
+        next = target;
+      } else {
+        next = cur + (target - cur) * alpha;
+      }
     }
     glideValues[key] = next;
     if (key === 'position') {
@@ -665,12 +714,15 @@
     const cyclePhase = (elapsedSec % cycleSec) / cycleSec;
     const range = state.auto.range;
 
-    // 計算通用漸變曲線進度 (0 ~ 1)；所有模式皆為連續曲線，不再有鋸齒狀斷點
-    let morphProgress = 0.5 - 0.5 * Math.cos((elapsedSec / cycleSec) * Math.PI * 2);
+    // 計算連續漸變曲線進度 (0.0 ~ 1.0)
+    // 透過專門設計的駐留曲線 (dwell plateau)，確保進度能「精準到達 0.0 與 1.0」並有足夠時間維持於極端
+    let morphProgress;
     if (state.auto.tempoMode === 'accel') {
-      morphProgress = smoothRampCycle(cyclePhase);       // 慢 → 快，再平滑回落
+      morphProgress = cycleShapeAccel(cyclePhase);       // 慢 → 快，極小極大兩端皆有平滑駐留
     } else if (state.auto.tempoMode === 'decel') {
-      morphProgress = 1 - smoothRampCycle(cyclePhase);   // 快 → 慢，再平滑回升
+      morphProgress = cycleShapeDecel(cyclePhase);       // 快 → 慢，極大極小兩端皆有平滑駐留
+    } else {
+      morphProgress = cycleShapePendulum(cyclePhase);    // 呼吸來回，深吐深吸兩端皆精確抵達極限
     }
 
     // 1. 掃描位置 (Position)：僅在 params.position 為「自動」時才自動移動
@@ -723,12 +775,29 @@
 
       if (state.auto.tempoMode === 'random_morph') {
         const dRatio = state.grain.density / Math.max(0.01, state.auto.morphTargetDensity);
-        if (Math.abs(Math.log(dRatio)) < 0.08 || state.auto.morphTargetDensity < range.densityMin || state.auto.morphTargetDensity > range.densityMax) {
-          state.auto.morphTargetDensity = logLerp(range.densityMin, range.densityMax, Math.random());
-        }
         const sRatio = state.grain.sizeMs / Math.max(0.01, state.auto.morphTargetSize);
-        if (Math.abs(Math.log(sRatio)) < 0.08 || state.auto.morphTargetSize < range.sizeMin || state.auto.morphTargetSize > range.sizeMax) {
-          state.auto.morphTargetSize = logLerp(range.sizeMin, range.sizeMax, Math.random());
+        const arrived = Math.abs(Math.log(dRatio)) < 0.04 && Math.abs(Math.log(sRatio)) < 0.04;
+
+        if (nowMs >= (state.auto.morphHoldUntilMs || 0)) {
+          if (arrived || state.auto.morphTargetDensity < range.densityMin || state.auto.morphTargetDensity > range.densityMax) {
+            // 抵達目標後在該極值或質地駐留一段時間 (約 2 ~ 3.5 秒)，讓使用者能完整聆聽該極致狀態
+            state.auto.morphHoldUntilMs = nowMs + Math.max(1800, cycleSec * 140);
+            state.auto.morphStepIndex = ((state.auto.morphStepIndex || 0) + 1) % 4;
+
+            // 4 階段演化：確保必定依序探索「極小值極端 (極稀疏微粒)」、「中低質地」、「極大值極端 (極密集聲雲)」、「中高質地」
+            let frac;
+            if (state.auto.morphStepIndex === 0) {
+              frac = 0.0; // 必然精準到達極小值極端！
+            } else if (state.auto.morphStepIndex === 1) {
+              frac = 0.22 + Math.random() * 0.22;
+            } else if (state.auto.morphStepIndex === 2) {
+              frac = 1.0; // 必然精準到達極大值極端！
+            } else {
+              frac = 0.58 + Math.random() * 0.26;
+            }
+            state.auto.morphTargetDensity = logLerp(range.densityMin, range.densityMax, frac);
+            state.auto.morphTargetSize = logLerp(range.sizeMax, range.sizeMin, frac);
+          }
         }
         targetDensity = state.auto.morphTargetDensity;
         targetSize = state.auto.morphTargetSize;
@@ -737,8 +806,8 @@
         targetSize = logLerp(range.sizeMax, range.sizeMin, morphProgress);          // 由長到短
       }
 
-      // 隨機漸變模式使用較長的平滑時間，讓每次目標轉換都是緩慢滑行
-      const tauScale = state.auto.tempoMode === 'random_morph' ? Math.max(1.5, cycleSec * 0.25) : 1;
+      // 週期曲線自帶連續性與極端駐留區間；使用 tauScale = 0.35 確保在駐留期內 100% 抵達極端且過渡維持平滑
+      const tauScale = state.auto.tempoMode === 'random_morph' ? Math.max(0.8, cycleSec * 0.12) : 0.35;
       if (state.auto.params.density) glideParam('density', targetDensity, dt, tauScale, true);
       if (state.auto.params.size) glideParam('size', targetSize, dt, tauScale, true);
     }
@@ -758,7 +827,7 @@
       } else {
         let targetPitch;
         if (activePitchMode === 'rising') {
-          targetPitch = -12 + smoothRampCycle(cyclePhase) * 24; // 上揚後平滑回落，不再瞬間由 +12 跳回 -12
+          targetPitch = -12 + cycleShapeAccel(cyclePhase) * 24; // 上揚後平滑回落，不再瞬間由 +12 跳回 -12
         } else {
           targetPitch = Math.sin((elapsedSec / cycleSec) * Math.PI * 2) * 12;
         }
@@ -1919,7 +1988,7 @@
   });
 
   // 自動演化範圍：使用者可在合理區間內自訂速度與長度的最小/最大值，以及平滑時間
-  const RANGE_DEFAULTS = { densityMin: 2, densityMax: 120, sizeMin: 12, sizeMax: 900, glideSec: 2.5 };
+  const RANGE_DEFAULTS = { densityMin: 0.5, densityMax: 200, sizeMin: 5, sizeMax: 1500, glideSec: 2.0 };
   const rangeInputs = {
     densityMin: document.getElementById('range-density-min'),
     densityMax: document.getElementById('range-density-max'),
@@ -1957,12 +2026,19 @@
     });
     state.auto.range = sanitizeRange(raw);
     writeRangeInputs();
-    try { localStorage.setItem('ilab_auto_range', JSON.stringify(state.auto.range)); } catch (_) {}
+    try { localStorage.setItem('ilab_auto_range_v28', JSON.stringify(state.auto.range)); } catch (_) {}
   }
 
   try {
-    const saved = JSON.parse(localStorage.getItem('ilab_auto_range') || 'null');
-    if (saved) state.auto.range = sanitizeRange({ ...RANGE_DEFAULTS, ...saved });
+    const saved = JSON.parse(localStorage.getItem('ilab_auto_range_v28') || localStorage.getItem('ilab_auto_range') || 'null');
+    if (saved) {
+      // 若舊版儲存的是舊預設值 (2 與 120)，自動升級為完整的 0.5 ~ 200 全極端範圍
+      if (saved.densityMin === 2 && saved.densityMax === 120) {
+        state.auto.range = { ...RANGE_DEFAULTS };
+      } else {
+        state.auto.range = sanitizeRange({ ...RANGE_DEFAULTS, ...saved });
+      }
+    }
   } catch (_) {}
   writeRangeInputs();
 
@@ -1973,7 +2049,10 @@
   document.getElementById('btn-range-reset').addEventListener('click', () => {
     state.auto.range = { ...RANGE_DEFAULTS };
     writeRangeInputs();
-    try { localStorage.removeItem('ilab_auto_range'); } catch (_) {}
+    try {
+      localStorage.removeItem('ilab_auto_range_v28');
+      localStorage.removeItem('ilab_auto_range');
+    } catch (_) {}
   });
 
   // 以對數刻度初始化粒子長度與密度滑桿

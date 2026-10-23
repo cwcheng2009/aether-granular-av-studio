@@ -21,7 +21,7 @@
         <span class="pulse-dot"></span>
         <span class="brand-title">Ilab</span>
       </div>
-      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v2.7</span></span>
+      <span class="brand-subtitle">GRANULAR AV STUDIO <span class="badge">v2.8</span></span>
     </div>
 
     <!-- 訊號源切換 -->
@@ -333,17 +333,17 @@
           <div class="subbox-title">AUTO RANGE // 自動演化範圍與速度調節（可自訂）</div>
           <div class="range-grid">
             <span class="range-label">速度 (顆/秒)</span>
-            <input type="number" id="range-density-min" class="range-input" min="0.5" max="200" step="0.5" value="2" title="自動演化時的最慢速度 (0.5 ~ 200)" />
+            <input type="number" id="range-density-min" class="range-input" min="0.5" max="200" step="0.5" value="0.5" title="自動演化時的最慢速度 (0.5 ~ 200)" />
             <span class="range-sep">→</span>
-            <input type="number" id="range-density-max" class="range-input" min="0.5" max="200" step="0.5" value="120" title="自動演化時的最快速度 (0.5 ~ 200)" />
+            <input type="number" id="range-density-max" class="range-input" min="0.5" max="200" step="0.5" value="200" title="自動演化時的最快速度 (0.5 ~ 200)" />
 
             <span class="range-label">長度 (ms)</span>
-            <input type="number" id="range-size-min" class="range-input" min="5" max="1500" step="1" value="12" title="自動演化時的最短粒子長度 (5 ~ 1500)" />
+            <input type="number" id="range-size-min" class="range-input" min="5" max="1500" step="1" value="5" title="自動演化時的最短粒子長度 (5 ~ 1500)" />
             <span class="range-sep">→</span>
-            <input type="number" id="range-size-max" class="range-input" min="5" max="1500" step="1" value="900" title="自動演化時的最長粒子長度 (5 ~ 1500)" />
+            <input type="number" id="range-size-max" class="range-input" min="5" max="1500" step="1" value="1500" title="自動演化時的最長粒子長度 (5 ~ 1500)" />
 
             <span class="range-label">漸變平滑度 (秒)</span>
-            <input type="number" id="range-glide" class="range-input" min="0.5" max="15" step="0.5" value="2.5" title="參數漸變的平滑過渡時間常數；數值越大，數值變化越慢越平緩柔和 (0.5 ~ 15s)" />
+            <input type="number" id="range-glide" class="range-input" min="0.5" max="15" step="0.5" value="2.0" title="參數漸變的平滑過渡時間常數；數值越大，數值變化越慢越平緩柔和 (0.5 ~ 15s)" />
             <button type="button" class="mini-btn range-reset" id="btn-range-reset" title="恢復預設範圍與平滑度">恢復預設</button>
           </div>
           <div class="ramp-actions">
@@ -553,6 +553,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=2.7"></script>
+  <script src="app.js?v=2.8"></script>
 </body>
 </html>
