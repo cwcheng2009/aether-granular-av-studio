@@ -1,5 +1,5 @@
 /**
- * AETHER // GRANULAR AV STUDIO
+ * Ilab // GRANULAR AV STUDIO
  * 線上聲音粒子化合成 (Granular Synthesis) 與即時音訊反應視覺特效引擎
  * 支援三大訊號源：
  *  1. 音檔粒子 (Sampler) - 支援上傳任意音檔與 4 種高質感程序化合成取樣
@@ -2023,7 +2023,7 @@
         const url = URL.createObjectURL(wavBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `aether-granular-audio-${Date.now()}.wav`;
+        a.download = `ilab-granular-audio-${Date.now()}.wav`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       }
@@ -2105,7 +2105,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `aether-granular-session-${Date.now()}.${ext}`;
+        a.download = `ilab-granular-session-${Date.now()}.${ext}`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       };
@@ -2182,7 +2182,9 @@
     } catch (_) {}
   };
 
+  mmApiKeyInput.addEventListener('input', saveMmCredentials);
   mmApiKeyInput.addEventListener('change', saveMmCredentials);
+  mmGroupIdInput.addEventListener('input', saveMmCredentials);
   mmGroupIdInput.addEventListener('change', saveMmCredentials);
   mmEndpointSel.addEventListener('change', saveMmCredentials);
 
@@ -2199,6 +2201,7 @@
     directorModal.style.display = directorModal.style.display === 'none' ? 'flex' : 'none';
   });
   closeDirectorBtn.addEventListener('click', () => {
+    saveMmCredentials();
     directorModal.style.display = 'none';
   });
 
@@ -2294,7 +2297,7 @@
   // 試聽第 1 段語音按鈕
   document.getElementById('btn-test-mm-voice').addEventListener('click', async () => {
     const firstTextarea = document.querySelector('.step-script');
-    const text = firstTextarea ? firstTextarea.value.trim() : '歡迎來到 AETHER 粒子聲音合成實驗室。';
+    const text = firstTextarea ? firstTextarea.value.trim() : '歡迎來到 Ilab 粒子聲音合成實驗室。';
     directorStatusEl.textContent = '⏳ 正在連線 MiniMax 合成試聽語音...';
     directorStatusEl.style.color = '#ffb800';
 

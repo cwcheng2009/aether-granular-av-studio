@@ -1,4 +1,4 @@
-# AETHER // 粒子聲音合成與即時視覺特效實驗室 (Granular AV Studio)
+# Ilab // 粒子聲音合成與即時視覺特效實驗室 (Granular AV Studio)
 
 這是一個零外部依賴、可直接在瀏覽器線上運行的**聲音粒子化合成（Granular Synthesis）**與**即時音訊反應視覺特效（Real-time Audio-Reactive Visual FX）**互動網站，專為線上創作、演出與公開部署上架所設計。
 

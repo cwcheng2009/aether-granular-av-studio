@@ -1,5 +1,5 @@
 {
-  "name": "aether-granular-av-studio",
+  "name": "ilab-granular-av-studio",
   "version": "1.0.0",
   "description": "線上即時聲音粒子化合成 (Granular Synthesis) 與音訊反應粒子視覺特效網站",
   "scripts": {
