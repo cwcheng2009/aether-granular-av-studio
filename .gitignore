@@ -14,6 +14,8 @@ capture_real_ui_video.mjs
 *.mp3
 voice_previews/
 *.png
+!assets/
+!assets/**
 !qr_studio.png
 !qr_blog.png
 !qr_studio.svg

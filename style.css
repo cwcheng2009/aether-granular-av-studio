@@ -96,10 +96,65 @@ html, body {
   white-space: nowrap;
 }
 
-.ilab-emblem-svg {
-  display: block;
+.official-ilab-logo-wrap {
+  background: #ffffff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 243, 255, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.45));
+}
+
+.official-ilab-logo-wrap:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 243, 255, 0.4);
+}
+
+.official-ilab-logo-img {
+  height: 24px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  display: block;
+}
+
+.official-ilab-logo-wrap.large {
+  height: 44px;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.official-ilab-logo-img.large {
+  height: 34px;
+  max-width: 160px;
+}
+
+.official-banner-box {
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 14px 0;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+}
+
+.official-banner-box.in-modal {
+  margin: 12px 0 16px 0;
+}
+
+.official-banner-img {
+  width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-logo {
@@ -987,6 +1042,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border: 1px solid rgba(255, 42, 133, 0.4);
 }
 
+.app-badge {
+  background: rgba(0, 255, 157, 0.15);
+  color: #00ff9d;
+  border: 1px solid rgba(0, 255, 157, 0.4);
+}
+
 .qr-img-box {
   background: #ffffff;
   padding: 8px;
@@ -1070,7 +1131,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .about-modal-dialog {
   width: 100%;
-  max-width: 660px;
+  max-width: 760px;
   max-height: 92vh;
   overflow-y: auto;
   border-radius: 16px;
