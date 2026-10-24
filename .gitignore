@@ -1,0 +1,23 @@
+# API Keys & Credentials
+.env
+.env.*
+*.key
+*.pem
+*api_key*
+*token*
+
+# Local Generation Scripts & Artifacts
+generate_tutorial_audio.py
+capture_real_ui_video.mjs
+*.mp4
+*.wav
+*.mp3
+voice_previews/
+*.png
+
+# System & Editor
+.DS_Store
+Thumbs.db
+node_modules/
+.vscode/
+.idea/
