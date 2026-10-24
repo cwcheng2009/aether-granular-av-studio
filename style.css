@@ -72,6 +72,34 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  text-decoration: none;
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.brand-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brand-affiliation {
+  font-size: 9.5px;
+  color: var(--cyan);
+  opacity: 0.85;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.ilab-emblem-svg {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.45));
 }
 
 .brand-logo {
@@ -209,6 +237,18 @@ html, body {
   border-color: var(--amber);
   color: var(--amber);
   box-shadow: 0 0 14px rgba(255, 184, 0, 0.3);
+}
+
+.qrcode-btn {
+  background: rgba(0, 243, 255, 0.08);
+  border-color: rgba(0, 243, 255, 0.35);
+  color: var(--cyan);
+}
+
+.qrcode-btn:hover {
+  background: rgba(0, 243, 255, 0.2);
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(0, 243, 255, 0.35);
 }
 
 .record-btn .rec-dot {
@@ -810,6 +850,332 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .mobile-ui-fab:hover, .mobile-ui-fab:active {
   background: rgba(0, 240, 255, 0.22);
   transform: scale(1.04);
+}
+
+/* ==========================================
+   04 關於 Ilab 實驗室與雙 QR Code 展演樣式
+   ========================================== */
+.ilab-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(10, 14, 26, 0.75);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.ilab-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+}
+
+.ilab-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ilab-emblem-large {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.5));
+}
+
+.ilab-title-lg {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.ilab-subtitle-en {
+  font-size: 10px;
+  color: var(--cyan);
+  opacity: 0.85;
+}
+
+.ilab-author-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10px;
+}
+
+.affiliation-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.prof-badge {
+  background: rgba(0, 243, 255, 0.1);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  color: var(--cyan);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.ilab-desc {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.ilab-desc strong {
+  color: #ffffff;
+}
+
+/* 雙 QR Code 展演網格 */
+.qr-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.qr-card {
+  background: rgba(7, 10, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.qr-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 243, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 243, 255, 0.15);
+}
+
+.qr-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.qr-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.studio-badge {
+  background: rgba(0, 243, 255, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 243, 255, 0.4);
+}
+
+.blog-badge {
+  background: rgba(255, 42, 133, 0.15);
+  color: var(--pink);
+  border: 1px solid rgba(255, 42, 133, 0.4);
+}
+
+.qr-img-box {
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.qr-code-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.qr-url-text {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--cyan);
+  word-break: break-all;
+  line-height: 1.35;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.qr-actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+
+.qr-link-btn {
+  text-decoration: none;
+  background: rgba(0, 243, 255, 0.12);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  color: var(--cyan);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-link-btn:hover {
+  background: rgba(0, 243, 255, 0.25);
+  border-color: var(--cyan);
+}
+
+.btn-copy-url {
+  cursor: pointer;
+}
+
+.qr-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* ==========================================
+   雙 QR Code 彈跳視窗 (Modal)
+   ========================================== */
+.about-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 14, 0.82);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  padding: 18px;
+  animation: modalFadeIn 0.22s ease-out;
+}
+
+.about-modal-dialog {
+  width: 100%;
+  max-width: 660px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(11, 15, 27, 0.96);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 243, 255, 0.2);
+  animation: modalZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 14px;
+}
+
+.about-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-modal-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.about-modal-subheading {
+  font-size: 11px;
+  color: var(--cyan);
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.close-modal-btn {
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.close-modal-btn:hover {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+
+.about-modal-intro {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.about-modal-intro strong {
+  color: var(--cyan);
+}
+
+.about-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+  flex-wrap: wrap;
+}
+
+.footer-tip {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.footer-tip kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalZoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* 響應式行動裝置支援 */
