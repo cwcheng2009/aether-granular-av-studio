@@ -2,7 +2,7 @@
 
 > **線上體驗網址**：[https://cwcheng2009.github.io/aether-granular-av-studio/](https://cwcheng2009.github.io/aether-granular-av-studio/)  
 > **研究室網站**：[鄭建文數位音樂與互動科技研究室 (https://cwcheng2009.blogspot.com/)](https://cwcheng2009.blogspot.com/)  
-> **所屬單位**：國立臺北科技大學 互動設計系暨研究所 · 互動音樂與多媒體實驗室 (Ilab) · 指導教授：鄭建文
+> **所屬單位**：互動設計系暨研究所 · 互動音樂與多媒體實驗室 (ILAB) · 實驗室主持人：鄭建文
 
 ---
 
@@ -58,6 +58,6 @@ python3 -m http.server 8080
 
 ## 🌐 授權與引用
 
-* **版權所有**：國立臺北科技大學 互動設計系暨研究所 · 互動音樂與多媒體實驗室 (Ilab)
-* **指導教授**：鄭建文 (Prof. Chien-Wen Cheng)
+* **版權所有**：互動設計系暨研究所 · 互動音樂與多媒體實驗室 (ILAB)
+* **實驗室主持人**：鄭建文 (Prof. Chien-Wen Cheng)
 * **開源授權**：MIT License
