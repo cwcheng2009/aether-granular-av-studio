@@ -1,4 +1,4 @@
-# Ilab // 粒子聲音合成與即時視覺特效實驗室 (Granular AV Studio v2.8)
+# Ilab 粒子化音像工作室 // Ilab Granular Audio-Visual Studio (v2.8)
 
 > **線上體驗網址**：[https://cwcheng2009.github.io/aether-granular-av-studio/](https://cwcheng2009.github.io/aether-granular-av-studio/)  
 > **研究室網站**：[鄭建文數位音樂與互動科技研究室 (https://cwcheng2009.blogspot.com/)](https://cwcheng2009.blogspot.com/)  
@@ -6,7 +6,7 @@
 
 ---
 
-這是一個零外部依賴、純純標準 Web API（Web Audio API + HTML5 Canvas + MediaStream API）打造的**線上聲音粒子化合成（Granular Synthesis）**與**即時音訊反應視覺特效（Real-time Audio-Reactive Visual FX）**互動系統，專為線上創作、展演、跨領域教學與行動裝置體驗所設計。
+這是一個零外部依賴、純純標準 Web API（Web Audio API + HTML5 Canvas + MediaStream API）打造的**線上粒子化音像工作室（Ilab Granular Audio-Visual Studio）**，專為即時聲音粒子化合成（Granular Synthesis）與多維音像反應視覺（Real-time Audio-Reactive Visual FX）之線上創作、展演、跨領域教學與行動裝置體驗所設計。
 
 ---
 

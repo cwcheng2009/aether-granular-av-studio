@@ -88,6 +88,18 @@ html, body {
   gap: 1px;
 }
 
+.brand-title-cn {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
 .brand-affiliation {
   font-size: 9.5px;
   color: var(--cyan);
