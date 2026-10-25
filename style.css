@@ -82,30 +82,54 @@ html, body {
   opacity: 0.95;
 }
 
-.brand-text-col {
+.brand-title-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.brand-title-cn {
+.main-title-cn {
   font-family: var(--font-sans);
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(90deg, #ffffff, var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.main-title-en {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
   font-weight: 700;
-  font-size: 13.5px;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  display: flex;
+  letter-spacing: 0.8px;
+  color: #38bdf8;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  white-space: nowrap;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  line-height: 1.2;
+  line-height: 1.35;
 }
 
-.brand-affiliation {
-  font-size: 9.5px;
-  color: var(--cyan);
-  opacity: 0.85;
+.main-title-en .badge {
+  background: rgba(56, 189, 248, 0.22);
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
-  white-space: nowrap;
+  text-shadow: none;
 }
 
 .official-ilab-logo-wrap {
@@ -1254,6 +1278,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* 響應式行動裝置支援 */
 @media (max-width: 960px) {
   .brand-subtitle { display: none; }
+  .brand-title-wrap {
+    gap: 6px;
+  }
+  .main-title-cn {
+    font-size: 1.05rem;
+  }
+  .main-title-en {
+    font-size: 0.78rem;
+    padding: 1px 6px;
+  }
+  .main-title-en .badge {
+    font-size: 0.68rem;
+    padding: 0 4px;
+  }
   .topbar {
     top: 8px;
     left: 8px;
