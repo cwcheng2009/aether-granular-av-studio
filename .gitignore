@@ -27,3 +27,8 @@ Thumbs.db
 node_modules/
 .vscode/
 .idea/
+
+# Backend & Cloud Functions (Keep strictly local & deployed to GCP only)
+backend/
+__pycache__/
+*.pyc
