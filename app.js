@@ -2421,13 +2421,11 @@
 
   // 隱藏 / 顯示 UI 與全螢幕快捷鍵 (支援手機版右下角懸浮按鈕)
   const workspaceEl = document.getElementById('workspace-panels');
-  const topIlabBar = document.querySelector('.top-ilab-bar');
   const mobileUiFab = document.getElementById('btn-mobile-ui-fab');
   const mobileUiFabLabel = document.getElementById('mobile-ui-fab-label');
 
   function toggleWorkspacePanels() {
     const isHidden = workspaceEl.classList.toggle('ui-hidden');
-    if (topIlabBar) topIlabBar.classList.toggle('ui-hidden', isHidden);
     if (mobileUiFabLabel) {
       mobileUiFabLabel.textContent = isHidden ? '展開參數面板' : '收合參數面板';
     }

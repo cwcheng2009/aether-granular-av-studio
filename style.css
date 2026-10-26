@@ -55,16 +55,33 @@ html, body {
 /* 頂部導覽列 */
 .topbar {
   position: fixed;
-  top: 46px;
-  left: 16px;
-  right: 16px;
-  height: 54px;
+  top: 10px;
+  left: 14px;
+  right: 14px;
   border-radius: 14px;
   z-index: 20;
   display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+.topbar-row-brand {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  width: 100%;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.topbar-row-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: 12px;
 }
 
@@ -525,37 +542,13 @@ html, body {
   transition: opacity 0.4s ease;
 }
 
-/* 頂部官方實驗室與雙 QR 碼條 (置於網頁最上方，同 Spectral Delay Studio 設計) */
-.top-ilab-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 38px;
-  min-height: 38px;
-  background: linear-gradient(90deg, #090e18 0%, #111a2d 50%, #090e18 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  z-index: 50;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.top-ilab-bar.ui-hidden {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-100%);
-  pointer-events: none !important;
-}
-
+/* 頂部官方實驗室與雙 QR 碼標章列 (與軟體名稱同一行) */
 .top-ilab-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .top-ilab-logo-link {
@@ -711,7 +704,7 @@ html, body {
 /* 左右工作區面板容器 */
 .workspace {
   position: fixed;
-  top: 108px;
+  top: 114px;
   bottom: 16px;
   left: 16px;
   right: 16px;
