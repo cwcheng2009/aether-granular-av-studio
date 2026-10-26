@@ -2547,6 +2547,95 @@
     }
   }
 
+  // ==========================================
+  // GCP Cloud Functions 雲端 AI 粒子調音顧問
+  // ==========================================
+  const GCP_AI_SERVICE_URL = 'https://ai-service-4qqr5pvlsq-de.a.run.app';
+
+  const btnOpenAi = document.getElementById('btn-open-ai');
+  const aiModalBackdrop = document.getElementById('ai-modal-backdrop');
+  const btnCloseAi = document.getElementById('btn-close-ai');
+  const btnAiDone = document.getElementById('btn-ai-done');
+  const btnSendAi = document.getElementById('btn-send-ai');
+  const aiUserPromptInput = document.getElementById('ai-user-prompt');
+  const aiResponseBox = document.getElementById('ai-response-box');
+  const aiStatusIndicator = document.getElementById('ai-status-indicator');
+
+  function openAiModal() {
+    if (aiModalBackdrop) aiModalBackdrop.style.display = 'flex';
+  }
+
+  function closeAiModal() {
+    if (aiModalBackdrop) aiModalBackdrop.style.display = 'none';
+  }
+
+  if (btnOpenAi) btnOpenAi.addEventListener('click', openAiModal);
+  if (btnCloseAi) btnCloseAi.addEventListener('click', closeAiModal);
+  if (btnAiDone) btnAiDone.addEventListener('click', closeAiModal);
+
+  if (aiModalBackdrop) {
+    aiModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === aiModalBackdrop) closeAiModal();
+    });
+  }
+
+  document.querySelectorAll('.ai-quick-prompt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const prompt = btn.getAttribute('data-prompt');
+      if (aiUserPromptInput) aiUserPromptInput.value = prompt;
+      sendAiRequest(prompt);
+    });
+  });
+
+  async function sendAiRequest(customPrompt) {
+    const prompt = customPrompt || (aiUserPromptInput ? aiUserPromptInput.value.trim() : '');
+    if (!prompt) return;
+
+    if (btnSendAi) btnSendAi.disabled = true;
+    if (aiStatusIndicator) aiStatusIndicator.style.display = 'flex';
+    if (aiResponseBox) aiResponseBox.textContent = '連線至 GCP Cloud Functions 運算中，請稍候...';
+
+    try {
+      const res = await fetch(GCP_AI_SERVICE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          system_instruction: '你是 Ilab 粒子化音像工作室 (Ilab Granular Audio-Visual Studio) 的專業聲音設計與調音顧問。請根據聲音粒子化合成參數（發射密度、取樣長度、位置擴散、移調、濾波、殘響與立體聲寬度）提供精準、富有音樂性與繁體中文條列式的調音指南。'
+        })
+      });
+
+      const data = await res.json();
+      if (data.status === 'success' && data.reply) {
+        if (aiResponseBox) aiResponseBox.textContent = data.reply;
+      } else {
+        if (aiResponseBox) aiResponseBox.textContent = '【GCP 回應】\n' + (data.message || JSON.stringify(data));
+      }
+    } catch (err) {
+      if (aiResponseBox) {
+        aiResponseBox.textContent = '連線 GCP 服務發生錯誤：' + err.message + '\n請確認網路連線或稍後再試。';
+      }
+    } finally {
+      if (btnSendAi) btnSendAi.disabled = false;
+      if (aiStatusIndicator) aiStatusIndicator.style.display = 'none';
+    }
+  }
+
+  if (btnSendAi) {
+    btnSendAi.addEventListener('click', () => sendAiRequest());
+  }
+
+  if (aiUserPromptInput) {
+    aiUserPromptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendAiRequest();
+      }
+    });
+  }
+
   // 初始化靜態預覽波形並啟動主迴圈
   for (let i = 0; i < cachedWavePeaks.length; i++) {
     cachedWavePeaks[i] = 0.25 + 0.55 * Math.abs(Math.sin(i * 0.08) * Math.cos(i * 0.03));
