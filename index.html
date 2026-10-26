@@ -19,11 +19,11 @@
 
   <!-- 頂部導覽與主控列 -->
   <header class="topbar glass-panel">
-    <div class="brand" id="brand-link" title="點擊開啟 ILAB 實驗室簡介與雙 QR Code">
-      <div class="brand-logo">
-        <div class="official-ilab-logo-wrap" title="ILAB 互動音樂與多媒體實驗室">
-          <img src="assets/ilab_logo_clean.png" alt="ILAB 官方 Logo" class="official-ilab-logo-img">
-        </div>
+    <div class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+        </svg>
       </div>
       <div class="brand-title-wrap">
         <h1 class="main-title-cn">Ilab 粒子化音像工作室</h1>
@@ -70,16 +70,6 @@
         <span id="record-label">錄影 MP4</span>
       </button>
 
-      <button class="action-btn qrcode-btn" id="btn-open-qr" title="開啟 Ilab 實驗室介紹與雙 QR Code (連結線上版與部落格)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="3" height="3"/>
-          <rect x="18" y="18" width="3" height="3"/>
-        </svg>
-        <span>雙 QR</span>
-      </button>
 
       <button class="action-btn ai-btn" id="btn-open-ai" title="連線 GCP Cloud Functions 雲端 AI 粒子調音顧問">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
@@ -578,188 +568,8 @@
         </div>
       </div>
 
-      <!-- 4. 關於 ILAB 實驗室與官方雙 QR Code 連結 -->
-      <div class="panel-section about-section" id="section-about-ilab">
-        <div class="section-header">
-          <h2>04 // 關於 ILAB 實驗室與官方雙 QR CODE</h2>
-        </div>
-
-        <div class="ilab-card">
-          <div class="ilab-card-header">
-            <div class="ilab-logo-wrap">
-              <div class="official-ilab-logo-wrap large" title="ILAB 互動音樂與多媒體實驗室">
-                <img src="assets/ilab_logo_clean.png" alt="ILAB 官方 Logo" class="official-ilab-logo-img large">
-              </div>
-              <div>
-                <div class="ilab-title-lg">ILAB 互動音樂與多媒體實驗室</div>
-                <div class="ilab-subtitle-en">Interactive Music and Multimedia Laboratory</div>
-              </div>
-            </div>
-            <div class="ilab-author-tag">
-              <span class="affiliation-badge">互動設計系暨研究所</span>
-              <span class="prof-badge">實驗室主持人：鄭建文 (Prof. Chien-Wen Cheng)</span>
-            </div>
-          </div>
-
-          <p class="ilab-desc">
-            <strong>Ilab 粒子化音像工作室 (Ilab Granular Audio-Visual Studio)</strong> 專注於即時網頁聲音粒子化切片合成（Granular Synthesis）與多維音像反應視覺（Audio-Reactive Visuals）之跨領域研究與創作。歡迎使用官方雙 QR Code 掃描造訪實驗室或主持人網站：
-          </p>
-
-          <!-- 官方橫式完整雙 QR Code 標誌牌 -->
-          <div class="official-banner-box">
-            <img src="assets/ilab_dual_qr_horizontal_director_name_white.png" alt="ILAB 實驗室與主持人官方雙 QR Code 橫式標準標誌" class="official-banner-img" />
-          </div>
-
-          <!-- 雙 QR Code 展演網格 -->
-          <div class="qr-showcase-grid">
-            <!-- QR 1: ILAB 實驗室官方網站 -->
-            <div class="qr-card">
-              <div class="qr-card-title">
-                <span class="qr-badge studio-badge">官方網站</span>
-                <strong>ILAB 實驗室網站</strong>
-              </div>
-              <div class="qr-img-box">
-                <img src="assets/qr_lab.png" alt="ILAB 實驗室網站 QR Code" class="qr-code-img" loading="lazy" />
-              </div>
-              <div class="qr-url-text">https://ilab-ntut.blogspot.com/</div>
-              <div class="qr-actions">
-                <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn" title="在新分頁開啟實驗室網站">
-                  <span>開啟網頁 ↗</span>
-                </a>
-                <button type="button" class="mini-btn btn-copy-url" data-url="https://ilab-ntut.blogspot.com/" title="複製網址">複製連結</button>
-              </div>
-              <div class="qr-hint">🏛️ 探索實驗室最新研究、互動音樂創作與多媒體論文發表</div>
-            </div>
-
-            <!-- QR 2: 實驗室主持人：鄭建文 -->
-            <div class="qr-card">
-              <div class="qr-card-title">
-                <span class="qr-badge blog-badge">主持人</span>
-                <strong>實驗室主持人：鄭建文</strong>
-              </div>
-              <div class="qr-img-box">
-                <img src="assets/qr_director.png" alt="實驗室主持人：鄭建文 QR Code" class="qr-code-img" loading="lazy" />
-              </div>
-              <div class="qr-url-text">https://cwcheng2009.blogspot.com/</div>
-              <div class="qr-actions">
-                <a href="https://cwcheng2009.blogspot.com/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn" title="在新分頁開啟主持人個人網站">
-                  <span>前往網站 ↗</span>
-                </a>
-                <button type="button" class="mini-btn btn-copy-url" data-url="https://cwcheng2009.blogspot.com/" title="複製網址">複製連結</button>
-              </div>
-              <div class="qr-hint">👨‍🏫 鄭建文 主持人個人網站、跨領域聲音設計與科技藝術研究</div>
-            </div>
-
-            <!-- QR 3: 本系統網頁線上版 -->
-            <div class="qr-card">
-              <div class="qr-card-title">
-                <span class="qr-badge app-badge">線上體驗</span>
-                <strong>Ilab 粒子化音像工作室 線上版</strong>
-              </div>
-              <div class="qr-img-box">
-                <img src="qr_studio.png" alt="Ilab 粒子化音像工作室 線上版 QR Code" class="qr-code-img" loading="lazy" />
-              </div>
-              <div class="qr-url-text">https://cwcheng2009.github.io/aether-granular-av-studio/</div>
-              <div class="qr-actions">
-                <a href="https://cwcheng2009.github.io/aether-granular-av-studio/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn" title="在新分頁開啟工作室線上版">
-                  <span>線上體驗 ↗</span>
-                </a>
-                <button type="button" class="mini-btn btn-copy-url" data-url="https://cwcheng2009.github.io/aether-granular-av-studio/" title="複製網址">複製連結</button>
-              </div>
-              <div class="qr-hint">📱 手機相機掃描即開即玩，支援多點體感觸控</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
   </main>
-
-  <!-- ILAB 實驗室簡介與雙 QR Code 彈跳展演視窗 (Modal) -->
-  <div class="about-modal-backdrop glass-blur" id="about-modal" style="display:none;" aria-hidden="true">
-    <div class="about-modal-dialog glass-panel">
-      <div class="about-modal-header">
-        <div class="about-modal-title-row">
-          <div class="official-ilab-logo-wrap large" title="ILAB 互動音樂與多媒體實驗室">
-            <img src="assets/ilab_logo_clean.png" alt="ILAB 官方 Logo" class="official-ilab-logo-img large">
-          </div>
-          <div>
-            <h2 class="about-modal-heading">ILAB 互動音樂與多媒體實驗室</h2>
-            <div class="about-modal-subheading">Interactive Music and Multimedia Laboratory · 實驗室主持人：鄭建文 (Prof. Chien-Wen Cheng)</div>
-          </div>
-        </div>
-        <button type="button" class="mini-btn close-modal-btn" id="btn-close-about" title="關閉視窗 (Esc)">✕</button>
-      </div>
-
-      <div class="about-modal-body">
-        <p class="about-modal-intro">
-          歡迎使用 <strong>Ilab 粒子化音像工作室 (Ilab Granular Audio-Visual Studio)</strong>。可透過以下官方橫式標誌與 QR Code 造訪實驗室與主持人主頁，亦可使用手機掃描線上版隨時體驗：
-        </p>
-
-        <!-- 官方橫式完整雙 QR Code 標誌牌 -->
-        <div class="official-banner-box in-modal">
-          <img src="assets/ilab_dual_qr_horizontal_director_name_white.png" alt="ILAB 實驗室與主持人官方雙 QR Code 橫式標準標誌" class="official-banner-img" />
-        </div>
-
-        <div class="qr-showcase-grid in-modal">
-          <!-- QR 1: ILAB 實驗室網站 -->
-          <div class="qr-card">
-            <div class="qr-card-title">
-              <span class="qr-badge studio-badge">官方網站</span>
-              <strong>ILAB 實驗室網站</strong>
-            </div>
-            <div class="qr-img-box">
-              <img src="assets/qr_lab.png" alt="ILAB 實驗室網站 QR Code" class="qr-code-img" />
-            </div>
-            <div class="qr-url-text">https://ilab-ntut.blogspot.com/</div>
-            <div class="qr-actions">
-              <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn">開啟網頁 ↗</a>
-              <button type="button" class="mini-btn btn-copy-url" data-url="https://ilab-ntut.blogspot.com/">複製連結</button>
-            </div>
-            <div class="qr-hint">🏛️ 探索實驗室最新研究、互動音樂創作與多媒體論文發表</div>
-          </div>
-
-          <!-- QR 2: 實驗室主持人：鄭建文 -->
-          <div class="qr-card">
-            <div class="qr-card-title">
-              <span class="qr-badge blog-badge">主持人</span>
-              <strong>實驗室主持人：鄭建文</strong>
-            </div>
-            <div class="qr-img-box">
-              <img src="assets/qr_director.png" alt="實驗室主持人：鄭建文 QR Code" class="qr-code-img" />
-            </div>
-            <div class="qr-url-text">https://cwcheng2009.blogspot.com/</div>
-            <div class="qr-actions">
-              <a href="https://cwcheng2009.blogspot.com/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn">前往網站 ↗</a>
-              <button type="button" class="mini-btn btn-copy-url" data-url="https://cwcheng2009.blogspot.com/">複製連結</button>
-            </div>
-            <div class="qr-hint">👨‍🏫 鄭建文 主持人個人網站、跨領域聲音設計與科技藝術研究</div>
-          </div>
-
-          <!-- QR 3: 本系統網頁線上版 -->
-          <div class="qr-card">
-            <div class="qr-card-title">
-              <span class="qr-badge app-badge">線上體驗</span>
-              <strong>Ilab 粒子化音像工作室 線上版</strong>
-            </div>
-            <div class="qr-img-box">
-              <img src="qr_studio.png" alt="Ilab 粒子化音像工作室 線上版 QR Code" class="qr-code-img" />
-            </div>
-            <div class="qr-url-text">https://cwcheng2009.github.io/aether-granular-av-studio/</div>
-            <div class="qr-actions">
-              <a href="https://cwcheng2009.github.io/aether-granular-av-studio/" target="_blank" rel="noopener noreferrer" class="mini-btn qr-link-btn">線上體驗 ↗</a>
-              <button type="button" class="mini-btn btn-copy-url" data-url="https://cwcheng2009.github.io/aether-granular-av-studio/">複製連結</button>
-            </div>
-            <div class="qr-hint">📱 手機相機掃描即開即玩，支援多點體感觸控</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="about-modal-footer">
-        <span class="footer-tip">提示：點擊右上角「✕」或按鍵盤 <kbd>Esc</kbd> 即可返回主畫面</span>
-        <button type="button" class="cyber-btn" id="btn-about-done">完成並返回工作室</button>
-      </div>
-    </div>
-  </div>
 
   <!-- GCP Cloud Functions 雲端 AI 粒子調音顧問 Modal -->
   <div class="about-modal-backdrop" id="ai-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">

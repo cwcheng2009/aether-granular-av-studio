@@ -2462,62 +2462,6 @@
     }
   });
 
-  // ==========================================
-  // Ilab 實驗室介紹與雙 QR Code 彈跳視窗互動綁定
-  // ==========================================
-  const aboutModal = document.getElementById('about-modal');
-  const btnOpenQr = document.getElementById('btn-open-qr');
-  const brandLink = document.getElementById('brand-link');
-  const btnCloseAbout = document.getElementById('btn-close-about');
-  const btnAboutDone = document.getElementById('btn-about-done');
-
-  function openAboutModal() {
-    if (!aboutModal) return;
-    aboutModal.style.display = 'flex';
-    aboutModal.setAttribute('aria-hidden', 'false');
-  }
-
-  function closeAboutModal() {
-    if (!aboutModal) return;
-    aboutModal.style.display = 'none';
-    aboutModal.setAttribute('aria-hidden', 'true');
-  }
-
-  if (btnOpenQr) btnOpenQr.addEventListener('click', openAboutModal);
-  if (brandLink) brandLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    openAboutModal();
-  });
-  if (btnCloseAbout) btnCloseAbout.addEventListener('click', closeAboutModal);
-  if (btnAboutDone) btnAboutDone.addEventListener('click', closeAboutModal);
-
-  if (aboutModal) {
-    aboutModal.addEventListener('click', (e) => {
-      if (e.target === aboutModal) closeAboutModal();
-    });
-  }
-
-  // 一鍵複製 QR 網址按鈕
-  document.querySelectorAll('.btn-copy-url').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const url = btn.getAttribute('data-url');
-      if (!url) return;
-      try {
-        await navigator.clipboard.writeText(url);
-        const originalText = btn.textContent;
-        btn.textContent = '已複製！✓';
-        btn.style.color = '#00ff9d';
-        btn.style.borderColor = '#00ff9d';
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.color = '';
-          btn.style.borderColor = '';
-        }, 1800);
-      } catch (_) {
-        prompt('請選取並複製網址：', url);
-      }
-    });
-  });
 
   // ==========================================
   // 主動畫與音訊排程迴圈 (60 FPS)
