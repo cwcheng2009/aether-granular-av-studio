@@ -525,10 +525,152 @@ html, body {
   transition: opacity 0.4s ease;
 }
 
+/* 頂部緊湊 ILAB 品牌與雙 QR 碼條 (同 Spectral Delay Studio 設計) */
+.top-ilab-bar {
+  position: fixed;
+  top: 72px;
+  left: 16px;
+  right: 16px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  z-index: 18;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.top-ilab-bar.ui-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  pointer-events: none !important;
+}
+
+.top-ilab-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.top-ilab-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.top-ilab-logo-bg {
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  height: 22px;
+}
+
+.top-ilab-logo-img {
+  height: 18px;
+  width: auto;
+  display: block;
+}
+
+.top-ilab-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.top-qr-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.qr-thumb-box {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.qr-thumb-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.qr-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.qr-title {
+  color: #38bdf8;
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.qr-title:hover {
+  text-decoration: underline;
+}
+
+.qr-url {
+  font-size: 0.62rem;
+  color: #8b95b0;
+  font-family: monospace;
+}
+
+.btn-banner-toggle {
+  margin-left: auto;
+  background: rgba(16, 22, 36, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #94a3b8;
+  font-size: 0.65rem;
+  padding: 1px 8px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-banner-toggle:hover {
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.full-banner-drawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: rgba(9, 13, 22, 0.98);
+  border-bottom: 2px solid #00f2fe;
+  border-radius: 0 0 8px 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  margin-top: 4px;
+}
+
+.full-banner-img {
+  max-width: 90%;
+  max-height: 160px;
+  border-radius: 8px;
+}
+
 /* 左右工作區面板容器 */
 .workspace {
   position: fixed;
-  top: 78px;
+  top: 112px;
   bottom: 16px;
   left: 16px;
   right: 16px;
