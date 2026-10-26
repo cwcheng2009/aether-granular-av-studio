@@ -120,13 +120,6 @@
           <span id="record-label">錄影 MP4</span>
         </button>
 
-        <button class="action-btn ai-btn" id="btn-open-ai" title="連線 GCP Cloud Functions 雲端 AI 粒子調音顧問">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v3m0 14v3M2 12h3m14 0h3m-3.3-6.7l-2.1 2.1m-9.2 9.2l-2.1 2.1m0-13.4l2.1 2.1m9.2 9.2l2.1 2.1"/>
-          </svg>
-          <span>AI 顧問</span>
-        </button>
 
         <button class="action-btn icon-only" id="btn-toggle-ui" title="隱藏 / 顯示控制面板 (H)">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
@@ -626,46 +619,6 @@
     </section>
   </main>
 
-  <!-- GCP Cloud Functions 雲端 AI 粒子調音顧問 Modal -->
-  <div class="about-modal-backdrop" id="ai-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
-    <div class="about-modal-card glass-panel" style="max-width: 680px;">
-      <div class="about-modal-header">
-        <div class="about-modal-title-group">
-          <div class="pulse-dot"></div>
-          <h2 id="ai-modal-title">Ilab AI 粒子調音顧問 <span class="badge" style="margin-left:8px;">GCP Cloud Functions</span></h2>
-        </div>
-        <button type="button" class="about-modal-close" id="btn-close-ai" aria-label="關閉視窗">&times;</button>
-      </div>
-
-      <div class="about-modal-body">
-        <p class="about-lead-text">
-          已連線至專屬 <strong>Google Cloud Functions</strong> 伺服器端後端。前端零金鑰外露，透過 GCP 伺服器為您即時計算並提供專業的聲音切片與粒子音像調音建議：
-        </p>
-
-        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-          <button type="button" class="mini-btn ai-quick-prompt" data-prompt="我想營造深海環境氛圍（Ambient Drone），請建議取樣長度、發射密度與殘響濾波參數。">🌊 深海空靈氛圍建議</button>
-          <button type="button" class="mini-btn ai-quick-prompt" data-prompt="我想做出極稀疏、水滴般孤獨清脆的微音粒，參數應如何調整？">💧 稀疏水滴聲建議</button>
-          <button type="button" class="mini-btn ai-quick-prompt" data-prompt="如何配合相鄰步進漫步 (±1) 與由慢到快漸變，創造出電影感的高潮演化？">🎬 電影感高潮演化建議</button>
-        </div>
-
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-          <input type="text" id="ai-user-prompt" class="cyber-input" style="flex: 1; padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,240,255,0.3); color: #fff; font-size: 13px;" placeholder="輸入您的調音或聲音設計問題..." />
-          <button type="button" class="action-btn primary-glow" id="btn-send-ai" style="padding: 0 18px; font-weight: 700;">發送提問</button>
-        </div>
-
-        <div id="ai-status-indicator" style="display:none; color: var(--cyan); font-size: 12px; margin-bottom: 8px; align-items: center; gap: 6px;">
-          <span class="pulse-dot"></span> 正在向 Google Cloud Functions 請求 AI 分析...
-        </div>
-
-        <div id="ai-response-box" style="background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; color: #e2e8f0; min-height: 120px; max-height: 260px; overflow-y: auto; white-space: pre-wrap;">點擊上方快速提問，或直接輸入問題後發送，GCP 後端將為您提供即時調音建議。</div>
-      </div>
-
-      <div class="about-modal-footer">
-        <span class="footer-tip">API 端點: <code>https://ai-service-4qqr5pvlsq-de.a.run.app</code></span>
-        <button type="button" class="cyber-btn" id="btn-ai-done">關閉</button>
-      </div>
-    </div>
-  </div>
 
   <script src="app.js?v=2.9"></script>
 </body>

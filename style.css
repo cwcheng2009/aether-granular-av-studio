@@ -353,17 +353,6 @@ html, body {
   white-space: nowrap;
 }
 
-.action-btn.ai-btn {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(138, 43, 226, 0.2));
-  border-color: rgba(0, 240, 255, 0.35);
-  color: #00f0ff;
-}
-
-.action-btn.ai-btn:hover {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(138, 43, 226, 0.35));
-  border-color: var(--cyan);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
-}
 
 .action-btn:hover {
   background: rgba(255, 255, 255, 0.12);
