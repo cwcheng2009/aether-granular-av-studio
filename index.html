@@ -17,6 +17,58 @@
   <!-- 主 WebGL / 2D 混合粒子特效畫布 -->
   <canvas id="fx-canvas"></canvas>
 
+  <!-- 頂部官方實驗室與雙 QR Code 標章列 (置於網頁最上方) -->
+  <aside class="top-ilab-bar" aria-label="ILAB 互動音樂與多媒體實驗室">
+    <div class="top-ilab-inner">
+      <!-- Left: Clean ILAB Logo -->
+      <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="top-ilab-logo-link" title="前往 ILAB 實驗室官方網站">
+        <div class="top-ilab-logo-bg">
+          <img src="assets/ilab_logo_clean.png" alt="ILAB Logo" class="top-ilab-logo-img">
+        </div>
+      </a>
+
+      <div class="top-ilab-divider"></div>
+
+      <!-- Center-Left: QR 1 (ILAB 實驗室網站) -->
+      <div class="top-qr-item" title="手機鏡頭對準 QR Code 即可掃描，或點擊前往">
+        <div class="qr-thumb-box">
+          <img src="assets/qr_lab.png" alt="ILAB 實驗室網站 QR Code" class="qr-thumb-img">
+        </div>
+        <div class="qr-meta">
+          <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="qr-title">
+            🏛️ ILAB 實驗室網站 ↗
+          </a>
+          <span class="qr-url">ilab-ntut.blogspot.com</span>
+        </div>
+      </div>
+
+      <div class="top-ilab-divider"></div>
+
+      <!-- Center-Right: QR 2 (實驗室主持人：鄭建文) -->
+      <div class="top-qr-item" title="手機鏡頭對準 QR Code 即可掃描，或點擊前往">
+        <div class="qr-thumb-box">
+          <img src="assets/qr_director.png" alt="實驗室主持人：鄭建文 QR Code" class="qr-thumb-img">
+        </div>
+        <div class="qr-meta">
+          <a href="https://cwcheng2009.blogspot.com/" target="_blank" rel="noopener noreferrer" class="qr-title" style="color: #c084fc;">
+            👤 實驗室主持人：鄭建文 ↗
+          </a>
+          <span class="qr-url" style="color: #c084fc;">cwcheng2009.blogspot.com</span>
+        </div>
+      </div>
+
+      <!-- Toggle Full Big Banner Button -->
+      <button id="btnToggleFullBanner" class="btn-banner-toggle" title="展開 / 收合完整橫式標章圖檔">
+        <span id="bannerToggleText">📐 展開完整大圖</span>
+      </button>
+    </div>
+
+    <!-- Collapsible Full Banner Drawer -->
+    <div id="fullBannerDrawer" class="full-banner-drawer" style="display: none;">
+      <img src="assets/ilab_dual_qr_horizontal_director_name_white.png" alt="ILAB 橫式雙 QR 碼完整版" class="full-banner-img">
+    </div>
+  </aside>
+
   <!-- 頂部導覽與主控列 -->
   <header class="topbar glass-panel">
     <div class="brand">
@@ -88,58 +140,6 @@
       </button>
     </div>
   </header>
-
-  <!-- Top Compact ILAB Lab & Director Brand Bar (Matching Spectral Delay Studio) -->
-  <aside class="top-ilab-bar glass-panel" aria-label="ILAB 互動音樂與多媒體實驗室">
-    <div class="top-ilab-inner">
-      <!-- Left: Clean ILAB Logo -->
-      <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="top-ilab-logo-link" title="前往 ILAB 實驗室官方網站">
-        <div class="top-ilab-logo-bg">
-          <img src="assets/ilab_logo_clean.png" alt="ILAB Logo" class="top-ilab-logo-img">
-        </div>
-      </a>
-
-      <div class="top-ilab-divider"></div>
-
-      <!-- Center-Left: QR 1 (ILAB 實驗室網站) -->
-      <div class="top-qr-item" title="手機鏡頭對準 QR Code 即可掃描，或點擊前往">
-        <div class="qr-thumb-box">
-          <img src="assets/qr_lab.png" alt="ILAB 實驗室網站 QR Code" class="qr-thumb-img">
-        </div>
-        <div class="qr-meta">
-          <a href="https://ilab-ntut.blogspot.com/" target="_blank" rel="noopener noreferrer" class="qr-title">
-            🏛️ ILAB 實驗室網站 ↗
-          </a>
-          <span class="qr-url">ilab-ntut.blogspot.com</span>
-        </div>
-      </div>
-
-      <div class="top-ilab-divider"></div>
-
-      <!-- Center-Right: QR 2 (實驗室主持人：鄭建文) -->
-      <div class="top-qr-item" title="手機鏡頭對準 QR Code 即可掃描，或點擊前往">
-        <div class="qr-thumb-box">
-          <img src="assets/qr_director.png" alt="實驗室主持人：鄭建文 QR Code" class="qr-thumb-img">
-        </div>
-        <div class="qr-meta">
-          <a href="https://cwcheng2009.blogspot.com/" target="_blank" rel="noopener noreferrer" class="qr-title" style="color: #d8b4fe;">
-            👤 實驗室主持人：鄭建文 ↗
-          </a>
-          <span class="qr-url" style="color: #c084fc;">cwcheng2009.blogspot.com</span>
-        </div>
-      </div>
-
-      <!-- Toggle Full Big Banner Button -->
-      <button id="btnToggleFullBanner" class="btn-banner-toggle" title="展開 / 收合完整橫式標章圖檔">
-        <span id="bannerToggleText">📐 標章大圖</span>
-      </button>
-    </div>
-
-    <!-- Collapsible Full Banner Drawer -->
-    <div id="fullBannerDrawer" class="full-banner-drawer" style="display: none;">
-      <img src="assets/ilab_dual_qr_horizontal_director_name_white.png" alt="ILAB 橫式雙 QR 碼完整版" class="full-banner-img">
-    </div>
-  </aside>
 
   <!-- 中央畫布互動提示浮層 -->
   <div class="xy-hud" id="xy-hud">
